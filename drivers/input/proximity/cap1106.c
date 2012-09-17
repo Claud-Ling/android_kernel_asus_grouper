@@ -8,6 +8,7 @@
 #include <linux/module.h>
 #include <linux/kernel.h>
 #include <linux/i2c.h>
+#include <linux/earlysuspend.h>
 #include <linux/err.h>
 #include <linux/mutex.h>
 #include <linux/delay.h>
@@ -17,8 +18,9 @@
 #include <linux/device.h>
 #include <linux/slab.h>
 #include <linux/switch.h>
-#include <linux/gpio.h>
-#include <mach/board-grouper-misc.h>
+#include <asm/gpio.h>
+
+#include "include/mach/board-grouper-misc.h"
 
 MODULE_DESCRIPTION("SMSC Proximity Sensor CAP1106 Driver");
 MODULE_LICENSE("GPL");
@@ -65,12 +67,6 @@ static struct workqueue_struct *prox_wq;
 static struct switch_dev prox_sdev;
 static long checking_work_period = 100; //default (ms)
 static int is_wood_sensitivity = 0;
-static int prev_c2_status = 0;
-static int prev_c6_status = 0;
-static int c2_acc_cnt = 0;
-static int c6_acc_cnt = 0;
-static int acc_limit = 10;
-static int force_enable = 1;
 
 /*----------------------------------------------------------------------------
  ** FUNCTION DECLARATION
@@ -471,7 +467,6 @@ static ssize_t store_sensor_onoff(struct device *dev, struct device_attribute *a
         return -EINVAL;
 
     mutex_lock(&prox_mtx);
-    force_enable = enable;
     cap1106_enable_sensor(client, enable);
     mutex_unlock(&prox_mtx);
 
@@ -503,6 +498,7 @@ static ssize_t store_sensor_recal(struct device *dev, struct device_attribute *a
 {
     struct i2c_client *client = to_i2c_client(dev);
     struct cap1106_data *data = i2c_get_clientdata(client);
+    long value;
 
     PROX_DEBUG("\n");
 
@@ -631,48 +627,28 @@ static void cap1106_work_function(struct delayed_work *work)
 {
     int status;
     int value_delta_2,value_delta_6;
-    int bc2, bc6;
     struct cap1106_data *data = container_of(work, struct cap1106_data, work);
 
     disable_irq(data->client->irq);
     cap1106_write_reg(data->client, 0x00, 0x80); // Clear INT and Set Gain to MAX
     status = cap1106_read_reg(data->client, 0x03);
+    data->obj_detect = ((status == 0x2) || (status == 0x20));
+    switch_set_state(&prox_sdev, data->obj_detect);
     value_delta_2 = cap1106_read_reg(prox_data->client, 0x11);
     value_delta_6 = cap1106_read_reg(prox_data->client, 0x15);
-    bc2 = cap1106_read_reg(prox_data->client, 0x51);
-    bc6 = cap1106_read_reg(prox_data->client, 0x55);
-    PROX_DEBUG("Status: 0x%02X, BC2=0x%02X, D2=0x%02X, BC6=0x%02X, D6=0x%02X\n", status, bc2, value_delta_2, bc6, value_delta_6);
+    PROX_DEBUG("Status: 0x%02X, D2=0x%02X, D6=0x%02X\n", status, value_delta_2, value_delta_6);
     if (is_wood_sensitivity == 0) {
-        data->obj_detect = ((status == 0x2) || (status == 0x20) || (status == 0x22));
-        switch_set_state(&prox_sdev, data->obj_detect);
         if ((status == 0x2 && value_delta_2 == 0x7F)
             || (status == 0x20 && value_delta_6 == 0x7F)
             || (status == 0x22 && (value_delta_2 == 0x7F || value_delta_6 == 0x7F))) {
             PROX_DEBUG("set to wood sensitivity------>\n");
+            is_wood_sensitivity = 1;
+            data->overflow_status = status;
             //set sensitivity and threshold for wood touch
             cap1106_write_reg(prox_data->client, 0x1f, 0x4f);
             cap1106_write_reg(prox_data->client, 0x31, 0x50);
             cap1106_write_reg(prox_data->client, 0x35, 0x50);
-            is_wood_sensitivity = 1;
-            data->overflow_status = status;
-            c2_acc_cnt = 0;
-            c6_acc_cnt = 0;
-        } else {
-            if (value_delta_2 >= 0x08 && value_delta_2 <= 0x3F)
-                c2_acc_cnt++;
-            if (value_delta_6 >= 0x0a && value_delta_6 <= 0x3F)
-                c6_acc_cnt++;
-
-            PROX_DEBUG("c2_acc_cnt=%d, c6_acc_cnt=%d\n", c2_acc_cnt, c6_acc_cnt);
-            if (c2_acc_cnt >= acc_limit || c6_acc_cnt >= acc_limit) {
-                PROX_DEBUG("+++ FORCE RECALIBRATION +++\n");
-                cap1106_write_reg(data->client, 0x26, 0x22);
-                c2_acc_cnt = 0;
-                c6_acc_cnt = 0;
-            }
         }
-        prev_c2_status = (status & 0x02);
-        prev_c6_status = (status & 0x20);
     }
     enable_irq(data->client->irq);
 }
@@ -690,7 +666,7 @@ static irqreturn_t cap1106_interrupt_handler(int irq, void *dev)
 static int cap1106_config_irq(struct i2c_client *client)
 {
     int rc = 0 ;
-    unsigned int gpio = gpio_get_value(SAR_DET_3G_PR3);
+    unsigned gpio = irq_to_gpio(client->irq);
     const char* label = "cap1106_alert";
 
     PROX_DEBUG("\n");
@@ -736,7 +712,7 @@ static int cap1106_init_sensor(struct i2c_client *client)
         0x20, 0x20, // MAX duration disable
         0x21, 0x22, // Enable CS2+CS6.
         0x22, 0xff, // MAX duration time to max , repeat period time to max
-        0x24, 0x39, // digital count update time to 140*64ms
+        0x24, 0x3b, // digital count update time to 140*64ms
         0x27, 0x22, // Enable INT. for CS2+CS6.
         0x28, 0x22, // disable repeat irq
         0x2a, 0x00, // all channel run in the same time
@@ -765,36 +741,27 @@ static int cap1106_init_sensor(struct i2c_client *client)
     return rc;
 }
 
-static void cap1106_checking_work_function(struct delayed_work *work) {
-    int status;
+static void cap1106_checking_work_function(struct delayed_work *work){
     int value_delta_2;
     int value_delta_6;
-    int bc2, bc6;
 
     if (is_wood_sensitivity == 1){
         mutex_lock(&prox_mtx);
         if (prox_data->enable) {
-            status = cap1106_read_reg(prox_data->client, 0x03);
             value_delta_2 = cap1106_read_reg(prox_data->client, 0x11);
             value_delta_6 = cap1106_read_reg(prox_data->client, 0x15);
-            bc2 = cap1106_read_reg(prox_data->client, 0x51);
-            bc6 = cap1106_read_reg(prox_data->client, 0x55);
-            PROX_DEBUG("Status: 0x%02X, BC2=0x%02X, D2=0x%02X, BC6=0x%02X, D6=0x%02X\n", status, bc2, value_delta_2, bc6, value_delta_6);
-            if ((value_delta_2 == 0x00 && value_delta_6 == 0x00)
-                || (value_delta_2 == 0xFF && value_delta_6 == 0xFF)
-                || (value_delta_2 == 0x00 && value_delta_6 == 0xFF)
-                || (value_delta_2 == 0xFF && value_delta_6 == 0x00)
-                || (prox_data->overflow_status == 0x2 && (value_delta_2 > 0x50) && (value_delta_2 <= 0x7F))
-                || (prox_data->overflow_status == 0x20 && (value_delta_6 > 0x50) && (value_delta_6 <= 0x7F))
-                || (prox_data->overflow_status == 0x22 && (((value_delta_2 > 0x50) && (value_delta_2 <= 0x7F))
-                                                            || ((value_delta_6 > 0x50) && (value_delta_6 <= 0x7F))))) {
+            PROX_DEBUG("delta 2 = %02X , delta 6 = %02X \n", value_delta_2,value_delta_6);
+            if ((prox_data->overflow_status == 0x2 && (value_delta_2 == 0x00 || value_delta_2 == 0xFF || value_delta_2 > 0x50 ))
+                || (prox_data->overflow_status == 0x20 && (value_delta_6 == 0x00 || value_delta_6 == 0xFF || value_delta_6 > 0x50 ))
+                || (prox_data->overflow_status == 0x22 && ((value_delta_2 == 0x00 || value_delta_2 == 0xFF || value_delta_2 > 0x50 )
+                                                || (value_delta_6 == 0x00 || value_delta_6 == 0xFF || value_delta_6 > 0x50)))) {
                 PROX_DEBUG("unset is_wood_sensitivity to 0\n");
+                is_wood_sensitivity = 0;
+                prox_data->overflow_status = 0;
                 //set sensitivity and threshold for 2cm body distance
                 cap1106_write_reg(prox_data->client, 0x1f, 0x1f);
                 cap1106_write_reg(prox_data->client, 0x31, 0x08);
                 cap1106_write_reg(prox_data->client, 0x35, 0x0a);
-                is_wood_sensitivity = 0;
-                queue_delayed_work(prox_wq, &prox_data->work, 0);
             }
         } else {
             PROX_DEBUG("delta 2 = -1\n");
@@ -814,7 +781,7 @@ static int __devinit cap1106_probe(struct i2c_client *client, const struct i2c_d
 
     /* Touch data processing workqueue initialization */
     INIT_DELAYED_WORK(&prox_data->work, cap1106_work_function);
-    INIT_DELAYED_WORK(&prox_data->checking_work, cap1106_checking_work_function);
+    INIT_DELAYED_WORK(&prox_data->checking_work,cap1106_checking_work_function);
 
     i2c_set_clientdata(client, prox_data);
     prox_data->client->flags = 0;
@@ -891,8 +858,7 @@ static int cap1106_resume(struct i2c_client *client)
 {
     PROX_DEBUG("+\n");
     mutex_lock(&prox_mtx);
-    if (force_enable)
-        cap1106_enable_sensor(client, 1);
+    cap1106_enable_sensor(client, 1);
     mutex_unlock(&prox_mtx);
     PROX_DEBUG("-\n");
     return 0;
@@ -928,6 +894,9 @@ static int __init cap1106_init(void)
         PROX_ERROR("i2c_add_driver failed!\n");
         goto err_i2c_add_driver_failed;
     }
+
+    tegra_gpio_enable(SAR_DET_3G_PR3);
+    tegra_gpio_disable(SAR_DET_3G_PS5);
 
     PROX_INFO("Driver intialization done, SAR_DET_3G_PR3=%d", gpio_get_value(SAR_DET_3G_PR3));
 
