@@ -337,6 +337,7 @@ obj-${CONFIG_MACH_TEGRA_PLUTO}          += board-touch-raydium_spi.o
 
 obj-${CONFIG_TEGRA_BB_XMM_POWER}        += baseband-xmm-power.o
 obj-${CONFIG_TEGRA_BB_XMM_POWER2}       += baseband-xmm-power2.o
+CFLAGS_baseband-xmm-power.o := -DDEBUG
 
 obj-${CONFIG_TEGRA_ISOMGR}              += isomgr.o
 

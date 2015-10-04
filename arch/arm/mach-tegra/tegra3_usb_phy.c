@@ -2289,18 +2289,18 @@ static int hsic_rail_enable(struct tegra_usb_phy *phy)
 	int ret;
 
 	if (phy->hsic_reg == NULL) {
-		phy->hsic_reg = regulator_get(&phy->pdev->dev, "avdd_hsic");
+		phy->hsic_reg = regulator_get(&phy->pdev->dev, "vddio_hsic");
 		if (IS_ERR_OR_NULL(phy->hsic_reg)) {
-			pr_err("HSIC: Could not get regulator avdd_hsic\n");
+			pr_err("HSIC: Could not get regulator vddio_hsic\n");
 			ret = PTR_ERR(phy->hsic_reg);
 			phy->hsic_reg = NULL;
 			return ret;
 		}
 	}
-
+	regulator_set_voltage(phy->hsic_reg, 1200000, 1200000);
 	ret = regulator_enable(phy->hsic_reg);
 	if (ret < 0) {
-		pr_err("%s avdd_hsic could not be enabled\n", __func__);
+		pr_err("%s vddio_hsic could not be enabled\n", __func__);
 		return ret;
 	}
 
@@ -2318,9 +2318,11 @@ static int hsic_rail_disable(struct tegra_usb_phy *phy)
 
 	ret = regulator_disable(phy->hsic_reg);
 	if (ret < 0) {
-		pr_err("HSIC regulator avdd_hsic cannot be disabled\n");
+		pr_err("HSIC regulator vddio_hsic cannot be disabled\n");
 		return ret;
 	}
+	regulator_put(phy->hsic_reg);
+	phy->hsic_reg = NULL;
 
 	return 0;
 }
@@ -2334,7 +2336,7 @@ static int uhsic_phy_open(struct tegra_usb_phy *phy)
 	phy->hsic_reg = NULL;
 	ret = hsic_rail_enable(phy);
 	if (ret < 0) {
-		pr_err("%s avdd_hsic could not be enabled\n", __func__);
+		pr_err("%s vddio_hsic could not be enabled\n", __func__);
 		return ret;
 	}
 
@@ -2365,7 +2367,7 @@ static void uhsic_phy_close(struct tegra_usb_phy *phy)
 
 	ret = hsic_rail_disable(phy);
 	if (ret < 0)
-		pr_err("%s avdd_hsic could not be disabled\n", __func__);
+		pr_err("%s vddio_hsic could not be disabled\n", __func__);
 }
 
 static int uhsic_phy_irq(struct tegra_usb_phy *phy)

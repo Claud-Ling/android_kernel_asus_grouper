@@ -39,13 +39,14 @@
 #include "devices.h"
 #include "gpio-names.h"
 #include "baseband-xmm-power.h"
+#include "pm-irq.h"
 
 MODULE_LICENSE("GPL");
 
 unsigned long modem_ver = XMM_MODEM_VER_1130;
 EXPORT_SYMBOL(modem_ver);
 
-unsigned long modem_flash;
+unsigned long modem_flash = 1;
 EXPORT_SYMBOL(modem_flash);
 
 unsigned long modem_pm = 1;
@@ -77,6 +78,9 @@ static struct gpio tegra_baseband_gpios[] = {
 	{ -1, GPIOF_IN,            "IPC_AP_WAKE" },
 	{ -1, GPIOF_OUT_INIT_LOW,  "IPC_HSIC_ACTIVE" },
 	{ -1, GPIOF_IN,            "IPC_HSIC_SUS_REQ" },
+	{ -1, GPIOF_OUT_INIT_LOW,  "BB_VBAT" },
+	{ -1, GPIOF_IN,            "IPC_BB_RST_IND" },
+	{ -1, GPIOF_OUT_INIT_LOW,  "IPC_BB_FORCE_CRASH" },
 };
 
 static enum baseband_xmm_powerstate_t baseband_xmm_powerstate;
@@ -212,6 +216,8 @@ static int baseband_modem_power_on_async(
 	msleep(40);
 	gpio_set_value(data->modem.xmm.bb_rst, 1);
 	usleep_range(1000, 2000);
+	gpio_set_value(data->modem.xmm.bb_vbat, 0);
+	usleep_range(1000, 2000);
 
 	gpio_set_value(data->modem.xmm.bb_on, 1);
 	udelay(70);
@@ -229,6 +235,9 @@ static int baseband_modem_power_on_async(
 
 static void xmm_power_reset_on(struct baseband_power_platform_data *pdata)
 {
+	/* Enable VBAT */
+	gpio_set_value(pdata->modem.xmm.bb_vbat, 1);
+
 	/* reset / power on sequence */
 	gpio_set_value(pdata->modem.xmm.bb_rst, 0);
 	msleep(40);
@@ -443,8 +452,30 @@ static void pm_qos_worker(struct work_struct *work)
 			(s32)PM_QOS_CPU_FREQ_MIN_DEFAULT_VALUE);
 }
 
-static DEVICE_ATTR(xmm_onoff, S_IRUSR | S_IWUSR | S_IRGRP,
-		NULL, xmm_onoff);
+static ssize_t xmm_nml_reset_modem(struct device *dev,
+	struct device_attribute *attr,
+	const char *buf, size_t count)
+{
+       int state;
+	struct platform_device *device = to_platform_device(dev);
+
+       sscanf(buf, "%d", &state);
+
+       pr_debug("%s {\n", __func__);
+       if (state > 0) {
+		xmm_power_off(device);
+		msleep(50);
+		xmm_power_on(device);
+       }
+       pr_debug("%s }\n", __func__);
+       return count;
+}
+
+static struct device_attribute xmm_device_attr[] = {
+       __ATTR(xmm_onoff, S_IRUSR | S_IWUSR | S_IRGRP, NULL, xmm_onoff),
+       __ATTR(xmm_nml_reset, S_IRUSR | S_IWUSR | S_IRGRP, NULL, xmm_nml_reset_modem),
+       __ATTR_NULL,
+};
 
 /* Do the work for AP/CP initiated L2->L0 */
 static void xmm_power_l2_resume(void)
@@ -589,6 +620,12 @@ void baseband_xmm_set_power_status(unsigned int status)
 }
 EXPORT_SYMBOL_GPL(baseband_xmm_set_power_status);
 
+void baseband_xmm_ap_resume_work(void)
+{
+	pr_debug("%s: AP resume\n",__func__);
+	queue_work(workqueue, &l2_resume_work);
+}
+EXPORT_SYMBOL( baseband_xmm_ap_resume_work);
 
 irqreturn_t xmm_power_ipc_ap_wake_irq(int value)
 {
@@ -921,7 +958,8 @@ static int xmm_power_driver_probe(struct platform_device *device)
 	struct baseband_power_platform_data *pdata = device->dev.platform_data;
 	struct device *dev = &device->dev;
 	unsigned long flags;
-	int err;
+	int err, i;
+	int ap_wake_irq;
 
 	pr_debug("%s\n", __func__);
 
@@ -942,11 +980,15 @@ static int xmm_power_driver_probe(struct platform_device *device)
 	xmm_power_drv_data.hostwake = 1;
 	init_waitqueue_head(&xmm_power_drv_data.bb_wait);
 
-	/* create device file */
-	err = device_create_file(dev, &dev_attr_xmm_onoff);
-	if (err < 0) {
-		pr_err("%s - device_create_file failed\n", __func__);
-		return -ENODEV;
+	/* create device file
+	 * location is at /sys/devices/platform/baseband_xmm_power
+	 */
+	for (i = 0; i < (ARRAY_SIZE(xmm_device_attr) - 1); i++) {
+		err = device_create_file(dev, &xmm_device_attr[i]);
+		if (err) {
+			pr_err("create file %d failed, err = %d\n", i, err);
+			goto failed_create_file;
+		}
 	}
 
 	/* init wake lock */
@@ -961,6 +1003,8 @@ static int xmm_power_driver_probe(struct platform_device *device)
 	tegra_baseband_gpios[3].gpio = pdata->modem.xmm.ipc_ap_wake;
 	tegra_baseband_gpios[4].gpio = pdata->modem.xmm.ipc_hsic_active;
 	tegra_baseband_gpios[5].gpio = pdata->modem.xmm.ipc_hsic_sus_req;
+	tegra_baseband_gpios[6].gpio = pdata->modem.xmm.bb_vbat;
+	tegra_baseband_gpios[7].gpio = pdata->modem.xmm.ipc_bb_rst_ind;
 	err = gpio_request_array(tegra_baseband_gpios,
 				ARRAY_SIZE(tegra_baseband_gpios));
 	if (err < 0) {
@@ -982,8 +1026,9 @@ static int xmm_power_driver_probe(struct platform_device *device)
 				__func__);
 			return err;
 		}
-		err = enable_irq_wake(gpio_to_irq(
-					pdata->modem.xmm.ipc_ap_wake));
+		ap_wake_irq = enable_irq_wake(gpio_to_irq(pdata->modem.xmm.ipc_ap_wake));
+		tegra_pm_irq_set_wake_type(ap_wake_irq, IRQF_TRIGGER_FALLING);
+		enable_irq_wake(ap_wake_irq);
 		if (err < 0)
 			pr_err("%s: enable_irq_wake error\n", __func__);
 
@@ -1022,10 +1067,16 @@ static int xmm_power_driver_probe(struct platform_device *device)
 
 	pr_debug("%s }\n", __func__);
 	return 0;
+
+failed_create_file:
+	while (i--)
+		device_remove_file(dev, &xmm_device_attr[i]);
+	return err;
 }
 
 static int xmm_power_driver_remove(struct platform_device *device)
 {
+	int i;
 	struct baseband_power_platform_data *pdata = device->dev.platform_data;
 	struct xmm_power_data *data = &xmm_power_drv_data;
 	struct device *dev = &device->dev;
@@ -1051,7 +1102,9 @@ static int xmm_power_driver_remove(struct platform_device *device)
 	wake_lock_destroy(&wakelock);
 
 	/* delete device file */
-	device_remove_file(dev, &dev_attr_xmm_onoff);
+	for (i = 0; i < (ARRAY_SIZE(xmm_device_attr) - 1); i++) {
+		device_remove_file(dev, &xmm_device_attr[i]);
+	}
 
 	/* unregister usb host controller */
 	if (pdata->hsic_unregister)
