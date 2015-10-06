@@ -148,7 +148,7 @@ static void remove_ril_files(void)
 
 static int __init ril_init(void)
 {
-	int err, i;
+	int err;
 	RIL_INFO("RIL init\n");
 
 	project_id = grouper_get_project_id();
@@ -156,11 +156,6 @@ static int __init ril_init(void)
 	/* enable and request gpio(s) */
 	if (project_id == GROUPER_PROJECT_NAKASI_3G) {
 		RIL_INFO("project_id = NAKASI_3G\n");
-		for (i = 0; i < ARRAY_SIZE(ril_gpios_nakasi3g); i++) {
-			//tegra_gpio_enable(ril_gpios_nakasi3g[i].gpio);
-			gpio_set_value(ril_gpios_nakasi3g[i].gpio, 1);
-			msleep(10);
-		}
 		err = gpio_request_array(ril_gpios_nakasi3g,
 				ARRAY_SIZE(ril_gpios_nakasi3g));
 		if (err < 0) {
@@ -212,8 +207,6 @@ static int __init ril_init(void)
 	RIL_INFO("RIL init successfully\n");
 	return 0;
 
-failed5:
-	sim_hot_plug_exit();
 failed4:
 	destroy_workqueue(workqueue);
 failed3:
