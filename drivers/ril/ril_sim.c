@@ -6,7 +6,7 @@
 #include <linux/irq.h>
 #include <linux/switch.h>
 
-#include "board-grouper-baseband.h"
+#include "baseband-xmm-power.h"
 #include "ril.h"
 #include "ril_sim.h"
 
