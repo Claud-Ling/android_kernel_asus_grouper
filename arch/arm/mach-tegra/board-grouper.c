@@ -62,7 +62,7 @@
 #include "board-common.h"
 #include "clock.h"
 #include "board-grouper.h"
-#include "board-grouper-baseband.h"
+#include "baseband-xmm-power.h"
 #include "devices.h"
 #include "gpio-names.h"
 #include "fuse.h"
@@ -549,7 +549,7 @@ void grouper_usb_hsic_phy_off(void)
 	if (hsic_enable_gpio != -1) {
 		gpio_set_value_cansleep(hsic_enable_gpio, 0);
 		udelay(1000);
-		baseband_xmm_enable_hsic_power(0);
+		tegra_baseband_rail_off();
 	}
 }
 
@@ -557,7 +557,7 @@ void grouper_usb_hsic_phy_on(void)
 {
 	pr_debug("%s\n", __func__);
 	if (hsic_enable_gpio != -1) {
-		baseband_xmm_enable_hsic_power(1);
+		tegra_baseband_rail_on();
 		gpio_set_value_cansleep(hsic_enable_gpio, 1);
 		udelay(1000);
 	}
@@ -680,24 +680,23 @@ static struct tegra_usb_otg_data tegra_otg_pdata = {
 	.ehci_pdata = &tegra_ehci1_utmi_pdata,
 };
 
-struct platform_device *tegra_usb_hsic_host_register(void)
+static struct platform_device *
+tegra_usb_hsic_host_register(struct platform_device *ehci_dev)
 {
 	struct platform_device *pdev;
 	int val;
 
-	pr_debug("%s\n", __func__);
-	pdev = platform_device_alloc(tegra_ehci2_device.name,
-		tegra_ehci2_device.id);
+	pdev = platform_device_alloc(ehci_dev->name, ehci_dev->id);
 	if (!pdev)
 		return NULL;
 
-	val = platform_device_add_resources(pdev, tegra_ehci2_device.resource,
-		tegra_ehci2_device.num_resources);
+	val = platform_device_add_resources(pdev, ehci_dev->resource,
+						ehci_dev->num_resources);
 	if (val)
 		goto error;
 
-	pdev->dev.dma_mask =  tegra_ehci2_device.dev.dma_mask;
-	pdev->dev.coherent_dma_mask = tegra_ehci2_device.dev.coherent_dma_mask;
+	pdev->dev.dma_mask =  ehci_dev->dev.dma_mask;
+	pdev->dev.coherent_dma_mask = ehci_dev->dev.coherent_dma_mask;
 
 	val = platform_device_add_data(pdev, &tegra_ehci_uhsic_pdata,
 			sizeof(struct tegra_usb_platform_data));
@@ -716,52 +715,15 @@ error:
 	return NULL;
 }
 
-void tegra_usb_hsic_host_unregister(struct platform_device *pdev)
+void tegra_usb_hsic_host_unregister(struct platform_device **platdev)
 {
-	pr_debug("%s\n", __func__);
-	platform_device_unregister(pdev);
-}
+	struct platform_device *pdev = *platdev;
 
-struct platform_device *tegra_usb_utmip_host_register(void)
-{
-	struct platform_device *pdev;
-	int val;
-
-	pr_debug("%s\n", __func__);
-	pdev = platform_device_alloc(tegra_ehci2_device.name,
-		tegra_ehci2_device.id);
-	if (!pdev)
-		return NULL;
-
-	val = platform_device_add_resources(pdev, tegra_ehci2_device.resource,
-		tegra_ehci2_device.num_resources);
-	if (val)
-		goto error;
-
-	pdev->dev.dma_mask =  tegra_ehci2_device.dev.dma_mask;
-	pdev->dev.coherent_dma_mask = tegra_ehci2_device.dev.coherent_dma_mask;
-
-	val = platform_device_add_data(pdev, &tegra_ehci2_utmi_pdata,
-			sizeof(struct tegra_usb_platform_data));
-	if (val)
-		goto error;
-
-	val = platform_device_add(pdev);
-	if (val)
-		goto error;
-
-	return pdev;
-
-error:
-	pr_err("%s: failed to add the host contoller device\n", __func__);
-	platform_device_put(pdev);
-	return NULL;
-}
-
-void tegra_usb_utmip_host_unregister(struct platform_device *pdev)
-{
-	pr_debug("%s\n", __func__);
-	platform_device_unregister(pdev);
+	if (pdev && &pdev->dev) {
+		platform_device_unregister(pdev);
+		*platdev = NULL;
+	} else
+		pr_err("%s: no platform device\n", __func__);
 }
 
 static struct baseband_power_platform_data tegra_baseband_power_data = {
@@ -780,7 +742,6 @@ static struct baseband_power_platform_data tegra_baseband_power_data = {
 			.ipc_hsic_active = XMM_GPIO_IPC_HSIC_ACTIVE,
 			.ipc_hsic_sus_req = XMM_GPIO_IPC_HSIC_SUS_REQ,
 			.ipc_bb_force_crash = XMM_GPIO_IPC_BB_FORCE_CRASH,
-			.hsic_device = &tegra_ehci2_device,
 		},
 	},
 };
@@ -827,14 +788,12 @@ static void grouper_modem_init(void)
 {
 	if (grouper_get_project_id() == GROUPER_PROJECT_NAKASI_3G) {
 		pr_info("%s\n", __func__);
+		tegra_baseband_power_data.ehci_device =
+					&tegra_ehci2_device,
 		tegra_baseband_power_data.hsic_register =
 					&tegra_usb_hsic_host_register;
 		tegra_baseband_power_data.hsic_unregister =
 					&tegra_usb_hsic_host_unregister;
-		tegra_baseband_power_data.utmip_register =
-					&tegra_usb_utmip_host_register;
-		tegra_baseband_power_data.utmip_unregister =
-					&tegra_usb_utmip_host_unregister;
 		platform_device_register(&tegra_baseband_power_device);
 	}
 }

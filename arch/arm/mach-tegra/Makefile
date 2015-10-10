@@ -338,6 +338,7 @@ obj-${CONFIG_MACH_TEGRA_PLUTO}          += panel-s-1080p-5.o
 obj-${CONFIG_MACH_TEGRA_PLUTO}          += board-touch-raydium_spi.o
 
 obj-${CONFIG_TEGRA_BB_XMM_POWER}        += baseband-xmm-power.o
+CFLAGS_baseband-xmm-power.o := -DDEBUG
 obj-${CONFIG_TEGRA_BB_XMM_POWER2}       += baseband-xmm-power2.o
 
 obj-${CONFIG_TEGRA_ISOMGR}              += isomgr.o
@@ -357,6 +358,7 @@ obj-${CONFIG_MACH_ROTH}                 += board-roth-fan.o
 obj-${CONFIG_MACH_ROTH}                 += board-touch-raydium_spi.o
 
 obj-${CONFIG_MACH_GROUPER}              += board-grouper.o
+CFLAGS_board-grouper.o := -DDEBUG
 obj-${CONFIG_MACH_GROUPER}              += board-grouper-kbc.o
 obj-${CONFIG_MACH_GROUPER}              += board-grouper-memory.o
 obj-${CONFIG_MACH_GROUPER}              += board-grouper-misc.o
@@ -368,6 +370,3 @@ obj-${CONFIG_MACH_GROUPER}              += board-grouper-power-ti.o
 obj-${CONFIG_MACH_GROUPER}              += board-grouper-sdhci.o
 obj-${CONFIG_MACH_GROUPER}              += board-grouper-sensors.o
 obj-${CONFIG_MACH_GROUPER}              += board-touch-grouper-synaptics-spi.o
-obj-${CONFIG_MACH_GROUPER}				+= board-grouper-baseband.o
-CFLAGS_board-grouper.o := -DDEBUG
-CFLAGS_board-grouper-baseband.o := -DDEBUG
