@@ -956,7 +956,6 @@ static int xmm_power_driver_probe(struct platform_device *device)
 	struct device *dev = &device->dev;
 	unsigned long flags;
 	int err, i;
-	int ap_wake_irq;
 
 	pr_debug("%s\n", __func__);
 
