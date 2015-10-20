@@ -620,7 +620,7 @@ EXPORT_SYMBOL_GPL(baseband_xmm_set_power_status);
 void baseband_xmm_ap_resume_work(void)
 {
 	pr_debug("%s: AP resume\n",__func__);
-	queue_work(workqueue, &l2_resume_work);
+	baseband_xmm_set_power_status(BBXMM_PS_L2TOL0);
 }
 EXPORT_SYMBOL(baseband_xmm_ap_resume_work);
 
