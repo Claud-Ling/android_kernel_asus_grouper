@@ -536,6 +536,12 @@ void grouper_usb_hsic_preresume(void)
 	baseband_xmm_set_power_status(BBXMM_PS_L2TOL0);
 }
 
+static void grouper_usb_hsic_post_resume(void)
+{
+	pr_debug("%s\n", __func__);
+	baseband_xmm_set_power_status(BBXMM_PS_L0);
+}
+
 void grouper_usb_hsic_phy_ready(void)
 {
 	pr_debug("%s\n", __func__);
@@ -585,6 +591,7 @@ static struct tegra_usb_phy_platform_ops uhsic_pdata_ops = {
 	.pre_phy_on = &grouper_usb_hsic_phy_on,
 	.post_suspend = &grouper_usb_hsic_postsupend,
 	.pre_resume = &grouper_usb_hsic_preresume,
+	.post_resume = &grouper_usb_hsic_post_resume,
 	.port_power = &grouper_usb_hsic_phy_ready,
 	.post_phy_off = &grouper_usb_hsic_phy_off,
 };
