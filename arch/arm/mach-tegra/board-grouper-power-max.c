@@ -27,6 +27,7 @@
 #include "board-grouper.h"
 #include <mach/board-grouper-misc.h>
 
+
 static struct regulator_consumer_supply max77663_sd0_supply[] = {
 	REGULATOR_SUPPLY("vdd_cpu", NULL),
 };
@@ -336,10 +337,6 @@ static struct regulator_consumer_supply fixed_reg_en_3v3_fuse_supply[] = {
 	REGULATOR_SUPPLY("vpp_fuse", NULL),
 };
 
-static struct regulator_consumer_supply fixed_reg_cdc_en_supply[] = {
-	REGULATOR_SUPPLY("cdc_en", NULL),
-};
-
 /* Macro for defining fixed regulator sub device data */
 #define FIXED_SUPPLY(_name) "fixed_reg_"#_name
 #define FIXED_REG(_id, _var, _name, _in_supply, _always_on, _boot_on,	\
@@ -393,8 +390,6 @@ FIXED_REG(8, en_vdd_com_a01,	en_vdd_com,		FIXED_SUPPLY(en_3v3_sys_a01),
 	1,	0,	TEGRA_GPIO_PD0,				true,	0,	3300);
 FIXED_REG(10, en_3v3_fuse_a01,	en_3v3_fuse,		FIXED_SUPPLY(en_3v3_sys_a01),
 	0,	0,	TEGRA_GPIO_PC1,				true,	0,	3300);
-FIXED_REG(11, cdc_en_a01,	cdc_en,			max77663_rails(sd2),
-	0,	1,	TEGRA_GPIO_PX2,				true,	0,	1200);
 
 /*
  * Creating the fixed regulator device tables
@@ -411,7 +406,6 @@ FIXED_REG(11, cdc_en_a01,	cdc_en,			max77663_rails(sd2),
 	ADD_FIXED_REG(en_vdd_pnl_a01),		\
 	ADD_FIXED_REG(en_vdd_com_a01),		\
 	ADD_FIXED_REG(en_3v3_fuse_a01),		\
-	ADD_FIXED_REG(cdc_en_a01),		\
 
 /* Gpio switch regulator platform data for Kai A01 */
 static struct platform_device *fixed_reg_devs_a01[] = {
