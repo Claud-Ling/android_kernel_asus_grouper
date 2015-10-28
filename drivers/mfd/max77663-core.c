@@ -546,8 +546,8 @@ static irqreturn_t max77663_irq(int irq, void *data)
 			return IRQ_NONE;
 	}
 
-	if (irq_top & IRQ_TOP_GPIO_MASK)
-		handle_nested_irq(MAX77663_IRQ_INT_TOP_GPIO + chip->irq_base);
+/*	if (irq_top & IRQ_TOP_GPIO_MASK)
+		handle_nested_irq(MAX77663_IRQ_INT_TOP_GPIO + chip->irq_base);*/
 
 	if (irq_top & IRQ_TOP_ONOFF_MASK) {
 		ret = max77663_do_irq(chip, MAX77663_REG_ONOFF_IRQ,
