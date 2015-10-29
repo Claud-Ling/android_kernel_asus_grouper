@@ -2284,47 +2284,6 @@ static void uhsic_phy_restore_end(struct tegra_usb_phy *phy)
 	}
 }
 
-static int hsic_rail_enable(struct tegra_usb_phy *phy)
-{
-	int ret;
-
-	if (phy->hsic_reg == NULL) {
-		phy->hsic_reg = regulator_get(&phy->pdev->dev, "avdd_hsic");
-		if (IS_ERR_OR_NULL(phy->hsic_reg)) {
-			pr_err("HSIC: Could not get regulator avdd_hsic\n");
-			ret = PTR_ERR(phy->hsic_reg);
-			phy->hsic_reg = NULL;
-			return ret;
-		}
-	}
-
-	ret = regulator_enable(phy->hsic_reg);
-	if (ret < 0) {
-		pr_err("%s avdd_hsic could not be enabled\n", __func__);
-		return ret;
-	}
-
-	return 0;
-}
-
-static int hsic_rail_disable(struct tegra_usb_phy *phy)
-{
-	int ret;
-
-	if (phy->hsic_reg == NULL) {
-		pr_warn("%s: unbalanced disable\n", __func__);
-		return -EIO;
-	}
-
-	ret = regulator_disable(phy->hsic_reg);
-	if (ret < 0) {
-		pr_err("HSIC regulator avdd_hsic cannot be disabled\n");
-		return ret;
-	}
-
-	return 0;
-}
-
 static int uhsic_phy_open(struct tegra_usb_phy *phy)
 {
 	unsigned long parent_rate;
