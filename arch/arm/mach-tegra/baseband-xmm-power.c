@@ -423,7 +423,7 @@ static ssize_t xmm_nml_reset(struct device *dev,
        pr_info("++ nml_reset_modem ++\n");
        if (state > 0) {
 		xmm_power_off(device);
-		msleep(50);
+		msleep(1000);
 		xmm_power_on(device);
        }
        pr_info("-- nml_reset_modem --\n");
