@@ -860,12 +860,6 @@ static struct notifier_block usb_xmm_nb = {
 static int xmm_power_pm_notifier_event(struct notifier_block *this,
 					unsigned long event, void *ptr)
 {
-	struct baseband_power_platform_data *pdata = xmm_power_drv_data.pdata;
-	unsigned long flags;
-
-	if (!pdata)
-		return NOTIFY_DONE;
-
 	pr_debug("%s: event %ld\n", __func__, event);
 
 	return NOTIFY_DONE;

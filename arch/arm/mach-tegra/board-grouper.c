@@ -552,7 +552,7 @@ void grouper_usb_hsic_phy_ready(void)
 void grouper_usb_hsic_phy_off(void)
 {
 	pr_debug("%s\n", __func__);
-	baseband_xmm_set_power_status(BBXMM_PS_L2);
+	baseband_xmm_set_power_status(BBXMM_PS_L3);
 	if (hsic_enable_gpio != -1) {
 		gpio_set_value_cansleep(hsic_enable_gpio, 0);
 		udelay(1000);
@@ -652,30 +652,6 @@ static struct tegra_usb_platform_data tegra_ehci1_utmi_pdata = {
 		.idle_wait_delay = 17,
 		.term_range_adj = 6,
 		.xcvr_setup = 15,
-		.xcvr_lsfslew = 2,
-		.xcvr_lsrslew = 2,
-		.xcvr_setup_offset = 0,
-		.xcvr_use_fuses = 1,
-	},
-};
-
-static struct tegra_usb_platform_data tegra_ehci2_utmi_pdata = {
-	.port_otg = false,
-	.has_hostpc = true,
-	.phy_intf = TEGRA_USB_PHY_INTF_UTMI,
-	.op_mode	= TEGRA_USB_OPMODE_HOST,
-	.u_data.host = {
-		.vbus_gpio = -1,
-		.hot_plug = true,
-		.remote_wakeup_supported = true,
-	.power_off_on_suspend = true,
-	},
-	.u_cfg.utmi = {
-		.hssync_start_delay = 0,
-		.elastic_limit = 16,
-		.idle_wait_delay = 17,
-		.term_range_adj = 6,
-		.xcvr_setup = 8,
 		.xcvr_lsfslew = 2,
 		.xcvr_lsrslew = 2,
 		.xcvr_setup_offset = 0,
