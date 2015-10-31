@@ -552,7 +552,7 @@ void grouper_usb_hsic_phy_ready(void)
 void grouper_usb_hsic_phy_off(void)
 {
 	pr_debug("%s\n", __func__);
-	baseband_xmm_set_power_status(BBXMM_PS_L3);
+	baseband_xmm_set_power_status(BBXMM_PS_L2);
 	if (hsic_enable_gpio != -1) {
 		gpio_set_value_cansleep(hsic_enable_gpio, 0);
 		udelay(1000);
