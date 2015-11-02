@@ -2944,6 +2944,8 @@ static int rt5639_probe(struct snd_soc_codec *codec)
 	struct rt5639_priv *rt5639 = snd_soc_codec_get_drvdata(codec);
 	int ret;
 
+	codec->dapm.idle_bias_off = 1;
+
 	pr_info("Codec driver version %s\n", VERSION);
 
 	ret = snd_soc_codec_set_cache_io(codec, 8, 16, SND_SOC_I2C);
