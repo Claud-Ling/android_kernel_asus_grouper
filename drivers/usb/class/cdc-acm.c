@@ -1528,7 +1528,6 @@ static int acm_resume(struct usb_interface *intf)
 {
 	struct acm *acm = usb_get_intfdata(intf);
 	int rv = 0;
-<<<<<<< HEAD
 	int cnt;
 #ifdef CONFIG_PM
 	struct urb *res;
@@ -1550,17 +1549,11 @@ static int acm_resume(struct usb_interface *intf)
 		return 0;
 	}
 	spin_unlock_irq(&acm->read_lock);
-=======
 
-	spin_lock_irq(&acm->read_lock);
-	spin_lock(&acm->write_lock);
->>>>>>> 97e72c4... USB: cdc-acm: fix write and resume race
-
-	if (--acm->susp_count)
-		goto out;
+	if (cnt)
+		return 0;
 
 	if (test_bit(ASYNCB_INITIALIZED, &acm->port.flags)) {
-<<<<<<< HEAD
 		rv = usb_submit_urb(acm->ctrlurb, GFP_NOIO);
 		spin_lock_irq(&acm->write_lock);
 #ifdef CONFIG_PM
@@ -1577,14 +1570,13 @@ static int acm_resume(struct usb_interface *intf)
 		}
 		spin_unlock_irq(&acm->write_lock);
 #else
-=======
-		rv = usb_submit_urb(acm->ctrlurb, GFP_ATOMIC);
-
->>>>>>> 97e72c4... USB: cdc-acm: fix write and resume race
 		if (acm->delayed_wb) {
 			wb = acm->delayed_wb;
 			acm->delayed_wb = NULL;
+			spin_unlock_irq(&acm->write_lock);
 			acm_start_wb(acm, wb);
+		} else {
+			spin_unlock_irq(&acm->write_lock);
 		}
 #endif
 
@@ -1593,14 +1585,12 @@ static int acm_resume(struct usb_interface *intf)
 		 * do the write path at all cost
 		 */
 		if (rv < 0)
-			goto out;
+			goto err_out;
 
-		rv = acm_submit_read_urbs(acm, GFP_ATOMIC);
+		rv = acm_submit_read_urbs(acm, GFP_NOIO);
 	}
-out:
-	spin_unlock(&acm->write_lock);
-	spin_unlock_irq(&acm->read_lock);
 
+err_out:
 	return rv;
 }
 
