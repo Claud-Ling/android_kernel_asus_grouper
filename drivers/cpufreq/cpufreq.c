@@ -712,7 +712,7 @@ static int cpufreq_add_dev_sysfs(unsigned int cpu,
 	int ret = 0;
 
 	/* prepare interface data */
-	ret = kobject_init_and_add(&policy->kobj, &ktype_cpufreq,
+	ret = kobject_init_and_add(kobj, &ktype_cpufreq,
 				   &dev->kobj, "cpufreq");
 	if (ret)
 		return ret;

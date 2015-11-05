@@ -1000,7 +1000,6 @@ static int crypt_setkey_allcpus(struct crypt_config *cc)
 	}
 
 	return err;
->>>>>>> d8b8a43... dm: fix truncated status strings
 }
 
 static int crypt_set_key(struct crypt_config *cc, char *key)
