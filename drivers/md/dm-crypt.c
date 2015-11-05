@@ -955,48 +955,17 @@ static int crypt_decode_key(u8 *key, char *hex, unsigned int size)
 	return 0;
 }
 
-static void crypt_free_tfms(struct crypt_config *cc, int cpu)
+/*
+ * Encode key into its hex representation
+ */
+static void crypt_encode_key(char *hex, u8 *key, unsigned int size)
 {
-	struct crypt_cpu *cpu_cc = per_cpu_ptr(cc->cpu, cpu);
-	unsigned i;
+	unsigned int i;
 
-	for (i = 0; i < cc->tfms_count; i++)
-		if (cpu_cc->tfms[i] && !IS_ERR(cpu_cc->tfms[i])) {
-			crypto_free_ablkcipher(cpu_cc->tfms[i]);
-			cpu_cc->tfms[i] = NULL;
-		}
-}
-
-static int crypt_alloc_tfms(struct crypt_config *cc, int cpu, char *ciphermode)
-{
-	struct crypt_cpu *cpu_cc = per_cpu_ptr(cc->cpu, cpu);
-	unsigned i;
-	int err;
-
-	for (i = 0; i < cc->tfms_count; i++) {
-		cpu_cc->tfms[i] = crypto_alloc_ablkcipher(ciphermode, 0, 0);
-		if (IS_ERR(cpu_cc->tfms[i])) {
-			err = PTR_ERR(cpu_cc->tfms[i]);
-			crypt_free_tfms(cc, cpu);
-			return err;
-		}
-	}
-
-	return 0;
-}
-
-static int crypt_setkey_allcpus(struct crypt_config *cc)
-{
-	unsigned subkey_size = cc->key_size >> ilog2(cc->tfms_count);
-	int cpu, err = 0, i, r;
-
-	for_each_possible_cpu(cpu) {
-		for (i = 0; i < cc->tfms_count; i++) {
-			r = crypto_ablkcipher_setkey(per_cpu_ptr(cc->cpu, cpu)->tfms[i],
-						     cc->key + (i * subkey_size), subkey_size);
-			if (r)
-				err = r;
-		}
+	for (i = 0; i < size; i++) {
+		sprintf(hex, "%02x", *key);
+		hex += 2;
+		key++;
 	}
 
 	return err;
@@ -1377,11 +1346,11 @@ static int crypt_map(struct dm_target *ti, struct bio *bio,
 	return DM_MAPIO_SUBMITTED;
 }
 
-static void crypt_status(struct dm_target *ti, status_type_t type,
-			 char *result, unsigned int maxlen)
+static int crypt_status(struct dm_target *ti, status_type_t type,
+			char *result, unsigned int maxlen)
 {
 	struct crypt_config *cc = ti->private;
-	unsigned i, sz = 0;
+	unsigned int sz = 0;
 
 	switch (type) {
 	case STATUSTYPE_INFO:
@@ -1391,11 +1360,17 @@ static void crypt_status(struct dm_target *ti, status_type_t type,
 	case STATUSTYPE_TABLE:
 		DMEMIT("%s ", cc->cipher_string);
 
-		if (cc->key_size > 0)
-			for (i = 0; i < cc->key_size; i++)
-				DMEMIT("%02x", cc->key[i]);
-		else
-			DMEMIT("-");
+		if (cc->key_size > 0) {
+			if ((maxlen - sz) < ((cc->key_size << 1) + 1))
+				return -ENOMEM;
+
+			crypt_encode_key(result + sz, cc->key, cc->key_size);
+			sz += cc->key_size << 1;
+		} else {
+			if (sz >= maxlen)
+				return -ENOMEM;
+			result[sz++] = '-';
+		}
 
 		DMEMIT(" %llu %s %llu", (unsigned long long)cc->iv_offset,
 				cc->dev->name, (unsigned long long)cc->start);
@@ -1405,6 +1380,7 @@ static void crypt_status(struct dm_target *ti, status_type_t type,
 
 		break;
 	}
+	return 0;
 }
 
 static void crypt_postsuspend(struct dm_target *ti)
