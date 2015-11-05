@@ -104,11 +104,7 @@ static int ade7758_ring_preenable(struct iio_dev *indio_dev)
 	size_t d_size;
 	unsigned channel;
 
-<<<<<<< HEAD
 	if (!ring->scan_count)
-=======
-	if (bitmap_empty(indio_dev->active_scan_mask, indio_dev->masklength))
->>>>>>> adea30f... staging:iio:ade7758: Fix check if channels are enabled in prenable
 		return -EINVAL;
 
 	channel = __ffs(ring->scan_mask);
