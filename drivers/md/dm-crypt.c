@@ -967,8 +967,6 @@ static void crypt_encode_key(char *hex, u8 *key, unsigned int size)
 		hex += 2;
 		key++;
 	}
-
-	return err;
 }
 
 static int crypt_set_key(struct crypt_config *cc, char *key)

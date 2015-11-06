@@ -534,7 +534,6 @@ int usb_match_one_id_intf(struct usb_device *dev,
 			  struct usb_host_interface *intf,
 			  const struct usb_device_id *id)
 {
-	WARN_ON(interface == NULL);
 	/* The interface class, subclass, and protocol should never be
 	 * checked for a match if the device class is Vendor Specific,
 	 * unless the match record specifies the Vendor ID. */
@@ -564,6 +563,7 @@ int usb_match_one_id_intf(struct usb_device *dev,
 int usb_match_one_id(struct usb_interface *interface,
 		     const struct usb_device_id *id)
 {
+	WARN_ON(interface == NULL);
 	struct usb_host_interface *intf;
 	struct usb_device *dev;
 
