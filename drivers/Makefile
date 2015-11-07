@@ -140,9 +140,4 @@ obj-$(CONFIG_PM_DEVFREQ)	+= devfreq/
 obj-$(CONFIG_EXTCON)		+= extcon/
 
 # ASUS customized RIL drivers
-<<<<<<< HEAD
 obj-$(CONFIG_RIL)			+= ril/
-=======
-obj-$(CONFIG_RIL)		+= ril/
-
->>>>>>> c0d93b6... grouper: baseband: bring up bb, modem and ril files

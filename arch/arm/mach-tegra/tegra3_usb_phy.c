@@ -2284,69 +2284,10 @@ static void uhsic_phy_restore_end(struct tegra_usb_phy *phy)
 	}
 }
 
-<<<<<<< HEAD
-=======
-#ifndef CONFIG_MACH_GROUPER
-static int hsic_rail_enable(struct tegra_usb_phy *phy)
-{
-	int ret;
-
-	if (phy->hsic_reg == NULL) {
-		phy->hsic_reg = regulator_get(&phy->pdev->dev, "avdd_hsic");
-		if (IS_ERR_OR_NULL(phy->hsic_reg)) {
-			pr_err("HSIC: Could not get regulator avdd_hsic\n");
-			ret = PTR_ERR(phy->hsic_reg);
-			phy->hsic_reg = NULL;
-			return ret;
-		}
-	}
-
-	ret = regulator_enable(phy->hsic_reg);
-	if (ret < 0) {
-		pr_err("%s avdd_hsic could not be enabled\n", __func__);
-		return ret;
-	}
-
-	return 0;
-}
-
-static int hsic_rail_disable(struct tegra_usb_phy *phy)
-{
-	int ret;
-
-	if (phy->hsic_reg == NULL) {
-		pr_warn("%s: unbalanced disable\n", __func__);
-		return -EIO;
-	}
-
-	ret = regulator_disable(phy->hsic_reg);
-	if (ret < 0) {
-		pr_err("HSIC regulator avdd_hsic cannot be disabled\n");
-		return ret;
-	}
-
-	return 0;
-}
-#endif
-
->>>>>>> c0d93b6... grouper: baseband: bring up bb, modem and ril files
 static int uhsic_phy_open(struct tegra_usb_phy *phy)
 {
 	unsigned long parent_rate;
 	int i;
-<<<<<<< HEAD
-=======
-#ifndef CONFIG_MACH_GROUPER
-	int ret;
-
-	phy->hsic_reg = NULL;
-	ret = hsic_rail_enable(phy);
-	if (ret < 0) {
-		pr_err("%s avdd_hsic could not be enabled\n", __func__);
-		return ret;
-	}
-#endif
->>>>>>> c0d93b6... grouper: baseband: bring up bb, modem and ril files
 
 	DBG("%s(%d) inst:[%d]\n", __func__, __LINE__, phy->inst);
 	parent_rate = clk_get_rate(clk_get_parent(phy->pllu_clk));
@@ -2368,23 +2309,8 @@ static int uhsic_phy_open(struct tegra_usb_phy *phy)
 
 static void uhsic_phy_close(struct tegra_usb_phy *phy)
 {
-<<<<<<< HEAD
 	DBG("%s(%d) inst:[%d]\n", __func__, __LINE__, phy->inst);
 	uhsic_powerdown_pmc_wake_detect(phy);
-=======
-#ifndef CONFIG_MACH_GROUPER
-	int ret;
-#endif
-
-	DBG("%s(%d) inst:[%d]\n", __func__, __LINE__, phy->inst);
-	uhsic_powerdown_pmc_wake_detect(phy);
-
-#ifndef CONFIG_MACH_GROUPER
-	ret = hsic_rail_disable(phy);
-	if (ret < 0)
-		pr_err("%s avdd_hsic could not be disabled\n", __func__);
-#endif
->>>>>>> c0d93b6... grouper: baseband: bring up bb, modem and ril files
 }
 
 static int uhsic_phy_irq(struct tegra_usb_phy *phy)

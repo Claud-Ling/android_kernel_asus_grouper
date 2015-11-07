@@ -27,13 +27,7 @@
 
 #include <mach/usb_phy.h>
 #include <mach/iomap.h>
-<<<<<<< HEAD
 #include <mach/board-grouper-misc.h>
-=======
-#ifdef CONFIG_MACH_GROUPER
-#include <mach/board-grouper-misc.h>
-#endif
->>>>>>> c0d93b6... grouper: baseband: bring up bb, modem and ril files
 #include <linux/pm_qos.h>
 
 #if 0
@@ -43,13 +37,7 @@
 #endif
 
 static const char driver_name[] = "tegra-ehci";
-<<<<<<< HEAD
 extern void baseband_xmm_ap_resume_work(void);
-=======
-#ifdef CONFIG_MACH_GROUPER
-extern void baseband_xmm_ap_resume_work(void);
-#endif
->>>>>>> c0d93b6... grouper: baseband: bring up bb, modem and ril files
 
 #define TEGRA_USB_DMA_ALIGN 32
 
@@ -659,15 +647,8 @@ static int tegra_ehci_resume(struct platform_device *pdev)
 {
 	struct tegra_ehci_hcd *tegra = platform_get_drvdata(pdev);
 	struct tegra_usb_platform_data *pdata = dev_get_platdata(&pdev->dev);
-<<<<<<< HEAD
 	if (grouper_get_project_id() == GROUPER_PROJECT_NAKASI_3G)
 		baseband_xmm_ap_resume_work();
-=======
-#ifdef CONFIG_MACH_GROUPER
-	if (grouper_get_project_id() == GROUPER_PROJECT_NAKASI_3G)
-		baseband_xmm_ap_resume_work();
-#endif
->>>>>>> c0d93b6... grouper: baseband: bring up bb, modem and ril files
 	if (pdata->u_data.host.turn_off_vbus_on_lp0 && pdata->port_otg)
 		tegra_usb_enable_vbus(tegra->phy, true);
 	return tegra_usb_phy_power_on(tegra->phy);

@@ -1210,7 +1210,6 @@ CONFIG_UID_CPUTIME=y
 #
 # Tegra Baseband Modem Drivers
 #
-CONFIG_RIL=y
 # CONFIG_TEGRA_USB_MODEM_POWER is not set
 # CONFIG_TEGRA_BB_SUPPORT is not set
 # CONFIG_TEGRA_CEC_SUPPORT is not set

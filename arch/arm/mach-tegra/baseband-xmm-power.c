@@ -32,41 +32,21 @@
 #include <linux/pm_runtime.h>
 #include <linux/suspend.h>
 #include <linux/pm_qos.h>
-<<<<<<< HEAD
 #include <mach/board-grouper-misc.h>
-=======
-#ifdef CONFIG_MACH_GROUPER
-#include <mach/board-grouper-misc.h>
-#endif
->>>>>>> c0d93b6... grouper: baseband: bring up bb, modem and ril files
 #include <mach/usb_phy.h>
 #include <linux/regulator/consumer.h>
 #include "board.h"
 #include "devices.h"
 #include "gpio-names.h"
 #include "baseband-xmm-power.h"
-<<<<<<< HEAD
 #include "pm-irq.h"
-=======
-#ifdef CONFIG_MACH_GROUPER
-#include "pm-irq.h"
-#endif
->>>>>>> c0d93b6... grouper: baseband: bring up bb, modem and ril files
 
 MODULE_LICENSE("GPL");
 
 unsigned long modem_ver = XMM_MODEM_VER_1130;
 EXPORT_SYMBOL(modem_ver);
 
-<<<<<<< HEAD
 unsigned long modem_flash = 1;
-=======
-#ifndef CONFIG_MACH_GROUPER
-unsigned long modem_flash;
-#else
-unsigned long modem_flash = 1;
-#endif
->>>>>>> c0d93b6... grouper: baseband: bring up bb, modem and ril files
 EXPORT_SYMBOL(modem_flash);
 
 unsigned long modem_pm = 1;
@@ -98,17 +78,9 @@ static struct gpio tegra_baseband_gpios[] = {
 	{ -1, GPIOF_IN,            "IPC_AP_WAKE" },
 	{ -1, GPIOF_OUT_INIT_LOW,  "IPC_HSIC_ACTIVE" },
 	{ -1, GPIOF_IN,            "IPC_HSIC_SUS_REQ" },
-<<<<<<< HEAD
 	{ -1, GPIOF_OUT_INIT_LOW,  "BB_VBAT" },
 	{ -1, GPIOF_IN,            "IPC_BB_RST_IND" },
 	{ -1, GPIOF_OUT_INIT_LOW,  "IPC_BB_FORCE_CRASH" },
-=======
-#ifdef CONFIG_MACH_GROUPER
-	{ -1, GPIOF_OUT_INIT_LOW,  "BB_VBAT" },
-	{ -1, GPIOF_IN,            "IPC_BB_RST_IND" },
-	{ -1, GPIOF_OUT_INIT_LOW,  "IPC_BB_FORCE_CRASH" },
-#endif
->>>>>>> c0d93b6... grouper: baseband: bring up bb, modem and ril files
 };
 
 static enum baseband_xmm_powerstate_t baseband_xmm_powerstate;
@@ -130,24 +102,8 @@ static bool modem_acked_resume;
 static spinlock_t xmm_lock;
 static DEFINE_MUTEX(xmm_onoff_mutex);
 static bool system_suspending;
-<<<<<<< HEAD
 static struct regulator *grouper_hsic_reg = NULL;
 static bool _hsic_reg_status;
-=======
-#ifndef CONFIG_MACH_GROUPER
-static struct regulator *enterprise_hsic_reg;
-#else
-static struct regulator *grouper_hsic_reg = NULL;
-#endif
-static bool _hsic_reg_status;
-static struct pm_qos_request boost_cpu_freq_req;
-static struct delayed_work pm_qos_work;
-#ifdef CONFIG_MACH_GROUPER
-#define BOOST_CPU_FREQ_MIN	1000000
-#else
-#define BOOST_CPU_FREQ_MIN	1500000
-#endif
->>>>>>> c0d93b6... grouper: baseband: bring up bb, modem and ril files
 
 /* driver specific data - same structure is used for flashless
  * & flashed modem drivers i.e. baseband-xmm-power2.c
@@ -155,65 +111,6 @@ static struct delayed_work pm_qos_work;
 struct xmm_power_data xmm_power_drv_data;
 EXPORT_SYMBOL(xmm_power_drv_data);
 
-<<<<<<< HEAD
-int tegra_baseband_rail_on(void)
-=======
-#ifndef CONFIG_MACH_GROUPER
-static int tegra_baseband_rail_on(void)
->>>>>>> c0d93b6... grouper: baseband: bring up bb, modem and ril files
-{
-	int ret;
-
-	/* only applicable to grouper */
-	if (grouper_get_project_id() != GROUPER_PROJECT_NAKASI_3G)
-		return 0;
-
-	if (_hsic_reg_status == true)
-		return 0;
-
-	if (grouper_hsic_reg == NULL) {
-		grouper_hsic_reg = regulator_get(NULL, "vddio_hsic");
-		if (IS_ERR_OR_NULL(grouper_hsic_reg)) {
-			pr_err("xmm: could not get regulator vddio_hsic\n");
-			grouper_hsic_reg = NULL;
-			return PTR_ERR(grouper_hsic_reg);
-		}
-		regulator_set_voltage(grouper_hsic_reg, 1200000, 1200000);
-	}
-	ret = regulator_enable(grouper_hsic_reg);
-	if (ret < 0) {
-		pr_err("xmm: failed to enable regulator\n");
-		return ret;
-	}
-	_hsic_reg_status = true;
-	return 0;
-}
-
-int tegra_baseband_rail_off(void)
-{
-	int ret;
-
-	/* only applicable to grouper */
-	if (grouper_get_project_id() != GROUPER_PROJECT_NAKASI_3G)
-		return 0;
-
-	if (_hsic_reg_status == false)
-		return 0;
-
-	if (IS_ERR_OR_NULL(grouper_hsic_reg)) {
-		pr_err("xmm: unbalanced disable on vddio_hsic regulator\n");
-		grouper_hsic_reg = NULL;
-		return PTR_ERR(grouper_hsic_reg);
-	}
-	ret = regulator_disable(grouper_hsic_reg);
-	if (ret < 0) {
-		pr_err("xmm: failed to disable regulator\n");
-		return ret;
-	}
-	_hsic_reg_status = false;
-	return 0;
-}
-#else
 int tegra_baseband_rail_on(void)
 {
 	int ret;
@@ -267,7 +164,6 @@ int tegra_baseband_rail_off(void)
 	_hsic_reg_status = false;
 	return 0;
 }
-#endif
 
 static inline enum baseband_xmm_powerstate_t baseband_xmm_get_power_status(void)
 {
@@ -306,19 +202,6 @@ static void xmm_power_reset_on(struct baseband_power_platform_data *pdata)
 	gpio_set_value(pdata->modem.xmm.bb_vbat, 1);
 	msleep(40);
 
-<<<<<<< HEAD
-=======
-	return 0;
-}
-
-static void xmm_power_reset_on(struct baseband_power_platform_data *pdata)
-{
-#ifdef CONFIG_MACH_GROUPER
-	/* Enable VBAT */
-	gpio_set_value(pdata->modem.xmm.bb_vbat, 1);
-	msleep(40);
-#endif
->>>>>>> c0d93b6... grouper: baseband: bring up bb, modem and ril files
 	/* reset / power on sequence */
 	gpio_set_value(pdata->modem.xmm.bb_rst, 0);
 	msleep(40);
@@ -461,15 +344,8 @@ static int xmm_power_off(struct platform_device *device)
 	gpio_set_value(pdata->modem.xmm.bb_rst, 0);
 	/* sleep 1ms */
 	usleep_range(1000, 2000);
-<<<<<<< HEAD
 	gpio_set_value(pdata->modem.xmm.bb_vbat, 0);
 	usleep_range(1000, 2000);
-=======
-#ifdef CONFIG_MACH_GROUPER
-	gpio_set_value(pdata->modem.xmm.bb_vbat, 0);
-	usleep_range(1000, 2000);
-#endif
->>>>>>> c0d93b6... grouper: baseband: bring up bb, modem and ril files
 
 	baseband_xmm_set_power_status(BBXMM_PS_UNINIT);
 
@@ -554,41 +430,11 @@ static ssize_t xmm_nml_reset(struct device *dev,
        return count;
 }
 
-<<<<<<< HEAD
-=======
-#ifdef CONFIG_MACH_GROUPER
-static ssize_t xmm_nml_reset(struct device *dev,
-	struct device_attribute *attr,
-	const char *buf, size_t count)
-{
-       int state;
-	struct platform_device *device = to_platform_device(dev);
-
-       sscanf(buf, "%d", &state);
-
-       pr_info("++ nml_reset_modem ++\n");
-       if (state > 0) {
-		xmm_power_off(device);
-		msleep(50);
-		xmm_power_on(device);
-       }
-       pr_info("-- nml_reset_modem --\n");
-       return count;
-}
-
->>>>>>> c0d93b6... grouper: baseband: bring up bb, modem and ril files
 static struct device_attribute xmm_device_attr[] = {
        __ATTR(xmm_onoff, S_IRUSR | S_IWUSR | S_IRGRP, NULL, xmm_onoff),
        __ATTR(xmm_nml_reset, S_IRUSR | S_IWUSR | S_IRGRP, NULL, xmm_nml_reset),
        __ATTR_NULL,
 };
-<<<<<<< HEAD
-=======
-#else
-static DEVICE_ATTR(xmm_onoff, S_IRUSR | S_IWUSR | S_IRGRP,
-		NULL, xmm_onoff);
-#endif
->>>>>>> c0d93b6... grouper: baseband: bring up bb, modem and ril files
 
 /* Do the work for AP/CP initiated L2->L0 */
 static void xmm_power_l2_resume(void)
@@ -733,20 +579,12 @@ void baseband_xmm_set_power_status(unsigned int status)
 }
 EXPORT_SYMBOL_GPL(baseband_xmm_set_power_status);
 
-<<<<<<< HEAD
-=======
-#ifdef CONFIG_MACH_GROUPER
->>>>>>> c0d93b6... grouper: baseband: bring up bb, modem and ril files
 void baseband_xmm_ap_resume_work(void)
 {
 	pr_debug("%s: AP resume\n",__func__);
 	baseband_xmm_set_power_status(BBXMM_PS_L2TOL0);
 }
 EXPORT_SYMBOL(baseband_xmm_ap_resume_work);
-<<<<<<< HEAD
-=======
-#endif
->>>>>>> c0d93b6... grouper: baseband: bring up bb, modem and ril files
 
 irqreturn_t xmm_power_ipc_ap_wake_irq(int value)
 {
@@ -1022,59 +860,8 @@ static struct notifier_block usb_xmm_nb = {
 static int xmm_power_pm_notifier_event(struct notifier_block *this,
 					unsigned long event, void *ptr)
 {
-<<<<<<< HEAD
 	pr_debug("%s: event %ld\n", __func__, event);
 
-=======
-#ifndef CONFIG_MACH_GROUPER
-	struct baseband_power_platform_data *pdata = xmm_power_drv_data.pdata;
-	unsigned long flags;
-
-	if (!pdata)
-		return NOTIFY_DONE;
-#endif
-
-	pr_debug("%s: event %ld\n", __func__, event);
-#ifndef CONFIG_MACH_GROUPER
-	switch (event) {
-	case PM_SUSPEND_PREPARE:
-		pr_debug("%s : PM_SUSPEND_PREPARE\n", __func__);
-		if (wake_lock_active(&wakelock)) {
-			pr_info("%s: wakelock was active, aborting suspend\n",
-					__func__);
-			return NOTIFY_STOP;
-		}
-
-		spin_lock_irqsave(&xmm_lock, flags);
-		if (wakeup_pending) {
-			wakeup_pending = false;
-			spin_unlock_irqrestore(&xmm_lock, flags);
-			pr_info("%s : XMM busy : Abort system suspend\n",
-				 __func__);
-			return NOTIFY_STOP;
-		}
-		system_suspending = true;
-		spin_unlock_irqrestore(&xmm_lock, flags);
-		return NOTIFY_OK;
-	case PM_POST_SUSPEND:
-		pr_debug("%s : PM_POST_SUSPEND\n", __func__);
-		spin_lock_irqsave(&xmm_lock, flags);
-		system_suspending = false;
-		if (wakeup_pending &&
-			(baseband_xmm_powerstate == BBXMM_PS_L2)) {
-			wakeup_pending = false;
-			cp_initiated_l2tol0 = true;
-			spin_unlock_irqrestore(&xmm_lock, flags);
-			pr_info("%s : Service Pending CP wakeup\n", __func__);
-			baseband_xmm_set_power_status(BBXMM_PS_L2TOL0);
-			return NOTIFY_OK;
-		}
-		wakeup_pending = false;
-		spin_unlock_irqrestore(&xmm_lock, flags);
-		return NOTIFY_OK;
-	}
-#endif
->>>>>>> c0d93b6... grouper: baseband: bring up bb, modem and ril files
 	return NOTIFY_DONE;
 }
 
@@ -1088,16 +875,8 @@ static int xmm_power_driver_probe(struct platform_device *device)
 	struct baseband_power_platform_data *pdata = device->dev.platform_data;
 	struct device *dev = &device->dev;
 	unsigned long flags;
-<<<<<<< HEAD
 	int err, i;
 	int ap_wake_irq;
-=======
-#ifdef CONFIG_MACH_GROUPER
-	int err, i, ap_wake_irq;
-#else
-	int err;
-#endif
->>>>>>> c0d93b6... grouper: baseband: bring up bb, modem and ril files
 
 	pr_debug("%s\n", __func__);
 
@@ -1118,10 +897,6 @@ static int xmm_power_driver_probe(struct platform_device *device)
 	xmm_power_drv_data.hostwake = 1;
 	init_waitqueue_head(&xmm_power_drv_data.bb_wait);
 
-<<<<<<< HEAD
-=======
-#ifdef CONFIG_MACH_GROUPER
->>>>>>> c0d93b6... grouper: baseband: bring up bb, modem and ril files
 	/* create device file
 	 * location is at /sys/devices/platform/baseband_xmm_power
 	 */
@@ -1131,18 +906,7 @@ static int xmm_power_driver_probe(struct platform_device *device)
 			pr_err("create file %d failed, err = %d\n", i, err);
 			goto failed_create_file;
 		}
-<<<<<<< HEAD
-=======
 	}
-#else
-	/* create device file */
-	err = device_create_file(dev, &dev_attr_xmm_onoff);
-	if (err < 0) {
-		pr_err("%s - device_create_file failed\n", __func__);
-		return -ENODEV;
->>>>>>> c0d93b6... grouper: baseband: bring up bb, modem and ril files
-	}
-#endif
 
 	/* init wake lock */
 	wake_lock_init(&wakelock, WAKE_LOCK_SUSPEND, "baseband_xmm_power");
@@ -1156,17 +920,9 @@ static int xmm_power_driver_probe(struct platform_device *device)
 	tegra_baseband_gpios[3].gpio = pdata->modem.xmm.ipc_ap_wake;
 	tegra_baseband_gpios[4].gpio = pdata->modem.xmm.ipc_hsic_active;
 	tegra_baseband_gpios[5].gpio = pdata->modem.xmm.ipc_hsic_sus_req;
-<<<<<<< HEAD
 	tegra_baseband_gpios[6].gpio = pdata->modem.xmm.bb_vbat;
 	tegra_baseband_gpios[7].gpio = pdata->modem.xmm.ipc_bb_rst_ind;
 	tegra_baseband_gpios[8].gpio = pdata->modem.xmm.ipc_bb_force_crash;
-=======
-#ifdef CONFIG_MACH_GROUPER
-	tegra_baseband_gpios[6].gpio = pdata->modem.xmm.bb_vbat;
-	tegra_baseband_gpios[7].gpio = pdata->modem.xmm.ipc_bb_rst_ind;
-	tegra_baseband_gpios[8].gpio = pdata->modem.xmm.ipc_bb_force_crash;
-#endif
->>>>>>> c0d93b6... grouper: baseband: bring up bb, modem and ril files
 	err = gpio_request_array(tegra_baseband_gpios,
 				ARRAY_SIZE(tegra_baseband_gpios));
 	if (err < 0) {
@@ -1188,20 +944,9 @@ static int xmm_power_driver_probe(struct platform_device *device)
 				__func__);
 			return err;
 		}
-<<<<<<< HEAD
 		ap_wake_irq = enable_irq_wake(gpio_to_irq(pdata->modem.xmm.ipc_ap_wake));
 		tegra_pm_irq_set_wake_type(ap_wake_irq, IRQF_TRIGGER_FALLING);
 		enable_irq_wake(ap_wake_irq);
-=======
-#ifdef CONFIG_MACH_GROUPER
-		ap_wake_irq = enable_irq_wake(gpio_to_irq(pdata->modem.xmm.ipc_ap_wake));
-		tegra_pm_irq_set_wake_type(ap_wake_irq, IRQF_TRIGGER_FALLING);
-		enable_irq_wake(ap_wake_irq);
-#else
-		err = enable_irq_wake(gpio_to_irq(
-					pdata->modem.xmm.ipc_ap_wake));
-#endif
->>>>>>> c0d93b6... grouper: baseband: bring up bb, modem and ril files
 		if (err < 0)
 			pr_err("%s: enable_irq_wake error\n", __func__);
 
@@ -1241,29 +986,15 @@ static int xmm_power_driver_probe(struct platform_device *device)
 	pr_debug("%s }\n", __func__);
 	return 0;
 
-<<<<<<< HEAD
-=======
-#ifdef CONFIG_MACH_GROUPER
->>>>>>> c0d93b6... grouper: baseband: bring up bb, modem and ril files
 failed_create_file:
 	while (i--)
 		device_remove_file(dev, &xmm_device_attr[i]);
 	return err;
-<<<<<<< HEAD
-=======
-#endif
->>>>>>> c0d93b6... grouper: baseband: bring up bb, modem and ril files
 }
 
 static int xmm_power_driver_remove(struct platform_device *device)
 {
-<<<<<<< HEAD
 	int i;
-=======
-#ifdef CONFIG_MACH_GROUPER
-	int i;
-#endif
->>>>>>> c0d93b6... grouper: baseband: bring up bb, modem and ril files
 	struct baseband_power_platform_data *pdata = device->dev.platform_data;
 	struct xmm_power_data *data = &xmm_power_drv_data;
 	struct device *dev = &device->dev;
@@ -1281,20 +1012,12 @@ static int xmm_power_driver_remove(struct platform_device *device)
 	if (modem_flash && modem_pm)
 		free_irq(gpio_to_irq(pdata->modem.xmm.ipc_ap_wake), NULL);
 
-<<<<<<< HEAD
-=======
-#ifdef CONFIG_MACH_GROUPER
->>>>>>> c0d93b6... grouper: baseband: bring up bb, modem and ril files
 	/* disable vddio_hsic regulator for hsic power */
 	if(grouper_hsic_reg) {
 		regulator_disable(grouper_hsic_reg);
 		regulator_put(grouper_hsic_reg);
 		grouper_hsic_reg = NULL;
 	}
-<<<<<<< HEAD
-=======
-#endif
->>>>>>> c0d93b6... grouper: baseband: bring up bb, modem and ril files
 
 	/* free baseband gpio(s) */
 	gpio_free_array(tegra_baseband_gpios,
@@ -1304,19 +1027,9 @@ static int xmm_power_driver_remove(struct platform_device *device)
 	wake_lock_destroy(&wakelock);
 
 	/* delete device file */
-<<<<<<< HEAD
 	for (i = 0; i < (ARRAY_SIZE(xmm_device_attr) - 1); i++) {
 		device_remove_file(dev, &xmm_device_attr[i]);
 	}
-=======
-#ifdef CONFIG_MACH_GROUPER
-	for (i = 0; i < (ARRAY_SIZE(xmm_device_attr) - 1); i++) {
-		device_remove_file(dev, &xmm_device_attr[i]);
-	}
-#else
-	device_remove_file(dev, &dev_attr_xmm_onoff);
-#endif
->>>>>>> c0d93b6... grouper: baseband: bring up bb, modem and ril files
 
 	/* unregister usb host controller */
 	if (pdata->hsic_unregister)
