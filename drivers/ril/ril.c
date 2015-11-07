@@ -18,16 +18,23 @@
 MODULE_DESCRIPTION(DRIVER_DESC);
 MODULE_LICENSE("GPL");
 
+<<<<<<< HEAD
 //**** external symbols
 
 
 //**** constants
 
+=======
+//**** constants
+>>>>>>> c0d93b6... grouper: baseband: bring up bb, modem and ril files
 #define _ATTR_MODE S_IRUSR | S_IWUSR | S_IRGRP
 
 
 //**** local variable declaration
+<<<<<<< HEAD
 
+=======
+>>>>>>> c0d93b6... grouper: baseband: bring up bb, modem and ril files
 static struct workqueue_struct *workqueue;
 static struct device *dev;
 static struct class *ril_class;
@@ -37,6 +44,7 @@ static int ril_minor = 0;
 static u32 project_id = 0;
 
 static struct gpio ril_gpios_nakasi3g[] = {
+<<<<<<< HEAD
 	{ MOD_VBUS_ON,    GPIOF_OUT_INIT_LOW,  "BB_VBUS"    },
 	{ USB_SW_SEL,     GPIOF_OUT_INIT_LOW,  "BB_SW_SEL"  },
 	{ SIM_CARD_DET,   GPIOF_IN,            "BB_SIM_DET" },
@@ -45,6 +53,15 @@ static struct gpio ril_gpios_nakasi3g[] = {
 
 //**** IRQ event handler
 
+=======
+	{ MOD_VBUS_ON,	GPIOF_OUT_INIT_LOW,	"BB_VBUS"	},
+	{ USB_SW_SEL,	GPIOF_OUT_INIT_LOW,	"BB_SW_SEL"	},
+	{ SIM_CARD_DET,	GPIOF_IN,		"BB_SIM_DET"	},
+	{ MOD_HANG,	GPIOF_IN,		"BB_MOD_HANG"	},
+};
+
+//**** IRQ event handler
+>>>>>>> c0d93b6... grouper: baseband: bring up bb, modem and ril files
 irqreturn_t ril_ipc_sim_det_irq(int irq, void *dev_id)
 {
 	return sim_interrupt_handle(irq, dev_id);
@@ -86,7 +103,10 @@ static struct device_attribute device_attr_nakasi3g[] = {
 };
 
 //**** initialize and finalize
+<<<<<<< HEAD
 
+=======
+>>>>>>> c0d93b6... grouper: baseband: bring up bb, modem and ril files
 static int create_ril_files(void)
 {
 	int rc = 0, sysfs_cnt = 0;

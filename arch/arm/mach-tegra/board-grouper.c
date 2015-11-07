@@ -679,7 +679,11 @@ tegra_usb_hsic_host_register(struct platform_device *ehci_dev)
 	if (val)
 		goto error;
 
+<<<<<<< HEAD
 	pdev->dev.dma_mask =  ehci_dev->dev.dma_mask;
+=======
+	pdev->dev.dma_mask = ehci_dev->dev.dma_mask;
+>>>>>>> c0d93b6... grouper: baseband: bring up bb, modem and ril files
 	pdev->dev.coherent_dma_mask = ehci_dev->dev.coherent_dma_mask;
 
 	val = platform_device_add_data(pdev, &tegra_ehci_uhsic_pdata,
@@ -714,6 +718,7 @@ static struct baseband_power_platform_data tegra_baseband_power_data = {
 	.baseband_type = BASEBAND_XMM,
 	.modem = {
 	.xmm = {
+<<<<<<< HEAD
 			.bb_rst = XMM_GPIO_BB_RST,
 			.bb_on = XMM_GPIO_BB_ON,
 			.bb_vbat = XMM_GPIO_BB_VBAT,
@@ -726,6 +731,20 @@ static struct baseband_power_platform_data tegra_baseband_power_data = {
 			.ipc_hsic_active = XMM_GPIO_IPC_HSIC_ACTIVE,
 			.ipc_hsic_sus_req = XMM_GPIO_IPC_HSIC_SUS_REQ,
 			.ipc_bb_force_crash = XMM_GPIO_IPC_BB_FORCE_CRASH,
+=======
+		.bb_rst = XMM_GPIO_BB_RST,
+		.bb_on = XMM_GPIO_BB_ON,
+		.bb_vbat = XMM_GPIO_BB_VBAT,
+		.bb_vbus = XMM_GPIO_BB_VBUS,
+		.bb_sw_sel = XMM_GPIO_BB_SW_SEL,
+		.sim_card_det = XMM_GPIO_SIM_CARD_DET,
+		.ipc_bb_rst_ind = XMM_GPIO_IPC_BB_RST_IND,
+		.ipc_bb_wake = XMM_GPIO_IPC_BB_WAKE,
+		.ipc_ap_wake = XMM_GPIO_IPC_AP_WAKE,
+		.ipc_hsic_active = XMM_GPIO_IPC_HSIC_ACTIVE,
+		.ipc_hsic_sus_req = XMM_GPIO_IPC_HSIC_SUS_REQ,
+		.ipc_bb_force_crash = XMM_GPIO_IPC_BB_FORCE_CRASH,
+>>>>>>> c0d93b6... grouper: baseband: bring up bb, modem and ril files
 		},
 	},
 };
