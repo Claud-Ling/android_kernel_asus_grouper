@@ -35,6 +35,8 @@
 
 /* grouper default display board pins */
 #define grouper_lvds_shutdown	TEGRA_GPIO_PN6
+#define DC_CTRL_MODE	(TEGRA_DC_OUT_CONTINUOUS_MODE | \
+			TEGRA_DC_OUT_INITIALIZED_MODE)
 
 static atomic_t sd_brightness = ATOMIC_INIT(255);
 
@@ -355,6 +357,8 @@ static struct tegra_dc_out grouper_disp1_out = {
 
 	.height		= 162,
 	.width		= 104,
+
+	.flags		= DC_CTRL_MODE,
 };
 
 #ifdef CONFIG_TEGRA_DC
