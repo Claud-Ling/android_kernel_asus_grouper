@@ -10,6 +10,8 @@ menuconfig KMEMCHECK
 	depends on SLUB || SLAB
 	depends on !CC_OPTIMIZE_FOR_SIZE
 	depends on !FUNCTION_TRACER
+	select FRAME_POINTER
+	select STACKTRACE
 	default n
 	help
 	  This option enables tracing of dynamically allocated kernel memory

@@ -31,13 +31,9 @@ blink_red='\033[05;31m'
 restore='\033[0m'
 
 if grep -q eabi <<< "$PATH" ; then
-echo Variables are good to go.
+echo Variables are good to go. 
 else
-export SUBARCH=arm
-export ARCH=arm
-export CROSS_COMPILE=arm-eabi-
-export PATH=$PATH:/home/jacob/arm-eabi-4.9/bin/
-export CCACHE=ccache
+export SUBARCH=arm ARCH=arm CROSS_COMPILE=arm-eabi- PATH=$PATH:/home/jacob/arm-eabi-4.9/bin/ CCACHE=ccache USE_CCACHE=1 CCACHE_DIR=$(pwd)/../.ccache
 fi
 
 ##### Compilation pivot point

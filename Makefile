@@ -245,8 +245,10 @@ CONFIG_SHELL := $(shell if [ -x "$$BASH" ]; then echo $$BASH; \
 
 HOSTCC       = gcc
 HOSTCXX      = g++
-HOSTCFLAGS   = -fno-crossjumping -fno-gcse -Wmissing-prototypes -Wstrict-prototypes -Ofast -fomit-frame-pointer  --param l1-cache-size=32 --param l1-cache-line-size=32 --param l2-cache-size=1024 -gtoggle -s -DNDEBUG -DTRIMMED --param simultaneous-prefetches=6 --param prefetch-latency=400 -fno-conserve-stack -fprefetch-loop-arrays -mtls-dialect=gnu2 -funroll-loops
-HOSTCXXFLAGS = -fno-crossjumping -fno-gcse -Ofast -fomit-frame-pointer  --param l1-cache-size=32 --param l1-cache-line-size=32 --param l2-cache-size=1024 -gtoggle -s -DNDEBUG -DTRIMMED --param simultaneous-prefetches=6 --param prefetch-latency=400 -fno-conserve-stack -fprefetch-loop-arrays -mtls-dialect=gnu2 -funroll-loops
+HOSTCFLAGS   = -Wmissing-prototypes -Wstrict-prototypes -Ofast -fomit-frame-pointer
+#-fno-crossjumping -fno-gcse -Wmissing-prototypes -Wstrict-prototypes -Ofast -fomit-frame-pointer  --param l1-cache-size=32 --param l1-cache-line-size=32 --param l2-cache-size=1024 -gtoggle -s -DNDEBUG -DTRIMMED --param simultaneous-prefetches=6 --param prefetch-latency=400 -fno-conserve-stack -fprefetch-loop-arrays -mtls-dialect=gnu2 -funroll-loops
+HOSTCXXFLAGS = -Ofast
+#-fno-crossjumping -fno-gcse -Ofast -fomit-frame-pointer  --param l1-cache-size=32 --param l1-cache-line-size=32 --param l2-cache-size=1024 -gtoggle -s -DNDEBUG -DTRIMMED --param simultaneous-prefetches=6 --param prefetch-latency=400 -fno-conserve-stack -fprefetch-loop-arrays -mtls-dialect=gnu2 -funroll-loops
 
 # Decide whether to build built-in, modular, or both.
 # Normally, just do built-in.
@@ -364,10 +366,14 @@ LINUXINCLUDE    := -I$(srctree)/arch/$(hdr-arch)/include \
 
 KBUILD_CPPFLAGS := -D__KERNEL__
 
-KBUILD_CFLAGS   := -fno-common -Ofast  -fprefetch-loop-arrays -fomit-frame-pointer \
+KBUILD_CFLAGS   := -fno-strict-aliasing -fno-common \
+		   -fno-delete-null-pointer-checks \
+		   -fomit-frame-pointer -fno-optimize-sibling-calls \
+		   -Ofast  -fprefetch-loop-arrays -fomit-frame-pointer \
 		   -fno-delete-null-pointer-checks --param l1-cache-size=32 --param l1-cache-line-size=32 --param l2-cache-size=1024 \
-		   -gtoggle -s -DNDEBUG -DTRIMMED -march=armv7-a --param simultaneous-prefetches=6 --param prefetch-latency=400 \
-		   -fno-conserve-stack -mcpu=cortex-a9 -mtune=cortex-a9 -fno-crossjumping -fno-gcse -mtls-dialect=gnu2 -funroll-loops -ftree-vectorize
+		   -gtoggle -s -DNDEBUG -DTRIMMED -fno-conserve-stack -mcpu=cortex-a9 -mtune=cortex-a9 -fno-crossjumping -fno-gcse -mtls-dialect=gnu2 -funroll-loops -ftree-vectorize
+
+## -march=armv7-a --param simultaneous-prefetches=6 --param prefetch-latency=400 \
 
 KBUILD_AFLAGS_KERNEL :=
 KBUILD_CFLAGS_KERNEL :=
@@ -586,9 +592,6 @@ endif
 # Use make W=1 to enable this warning (see scripts/Makefile.build)
 KBUILD_CFLAGS += $(call cc-disable-warning, unused-but-set-variable)
 
-ifdef CONFIG_FRAME_POINTER
-KBUILD_CFLAGS	+= -fno-omit-frame-pointer -fno-optimize-sibling-calls
-else
 # Some targets (ARM with Thumb2, for example), can't be built with frame
 # pointers.  For those, we don't have FUNCTION_TRACER automatically
 # select FRAME_POINTER.  However, FUNCTION_TRACER adds -pg, and this is
@@ -596,7 +599,6 @@ else
 # -fomit-frame-pointer with FUNCTION_TRACER.
 ifndef CONFIG_FUNCTION_TRACER
 KBUILD_CFLAGS	+= -fomit-frame-pointer
-endif
 endif
 
 KBUILD_CFLAGS   += $(call cc-option, -fno-var-tracking-assignments)
