@@ -36,11 +36,14 @@ else
 export SUBARCH=arm
 export ARCH=arm
 export CROSS_COMPILE=arm-eabi-
-export PATH=$PATH;/home/jacob/arm-eabi-4.9/bin/
+export PATH=$PATH:/home/jacob/arm-eabi-4.9/bin/
 export CCACHE=ccache
 fi
 
 ##### Compilation pivot point
+if [ $1 = "cfg" ]; then
+make -j2 menuconfig && exit
+fi
 if [ -e .config ]
 then
 # Kernel builds here with bldk

@@ -245,8 +245,8 @@ CONFIG_SHELL := $(shell if [ -x "$$BASH" ]; then echo $$BASH; \
 
 HOSTCC       = gcc
 HOSTCXX      = g++
-HOSTCFLAGS   = -fno-crossjumping -fno-gcse -Wmissing-prototypes -Wstrict-prototypes -Ofast -fomit-frame-pointer  --param l1-cache-size=32 --param l1-cache-line-size=32 --param l2-cache-size=1024 -gtoggle -s -DNDEBUG -DTRIMMED --param simultaneous-prefetches=6 --param prefetch-latency=400 -fno-conserve-stack -fprefetch-loop-arrays
-HOSTCXXFLAGS = -fno-crossjumping -fno-gcse -Ofast -fomit-frame-pointer  --param l1-cache-size=32 --param l1-cache-line-size=32 --param l2-cache-size=1024 -gtoggle -s -DNDEBUG -DTRIMMED --param simultaneous-prefetches=6 --param prefetch-latency=400 -fno-conserve-stack -fprefetch-loop-arrays
+HOSTCFLAGS   = -fno-crossjumping -fno-gcse -Wmissing-prototypes -Wstrict-prototypes -Ofast -fomit-frame-pointer  --param l1-cache-size=32 --param l1-cache-line-size=32 --param l2-cache-size=1024 -gtoggle -s -DNDEBUG -DTRIMMED --param simultaneous-prefetches=6 --param prefetch-latency=400 -fno-conserve-stack -fprefetch-loop-arrays -mtls-dialect=gnu2 -funroll-loops
+HOSTCXXFLAGS = -fno-crossjumping -fno-gcse -Ofast -fomit-frame-pointer  --param l1-cache-size=32 --param l1-cache-line-size=32 --param l2-cache-size=1024 -gtoggle -s -DNDEBUG -DTRIMMED --param simultaneous-prefetches=6 --param prefetch-latency=400 -fno-conserve-stack -fprefetch-loop-arrays -mtls-dialect=gnu2 -funroll-loops
 
 # Decide whether to build built-in, modular, or both.
 # Normally, just do built-in.
@@ -364,11 +364,11 @@ LINUXINCLUDE    := -I$(srctree)/arch/$(hdr-arch)/include \
 
 KBUILD_CPPFLAGS := -D__KERNEL__
 
-KBUILD_CFLAGS   := -fno-strict-aliasing -fno-common -Ofast  -fprefetch-loop-arrays \
+KBUILD_CFLAGS   := -fno-common -Ofast  -fprefetch-loop-arrays -fomit-frame-pointer \
 		   -fno-delete-null-pointer-checks --param l1-cache-size=32 --param l1-cache-line-size=32 --param l2-cache-size=1024 \
 		   -gtoggle -s -DNDEBUG -DTRIMMED -march=armv7-a --param simultaneous-prefetches=6 --param prefetch-latency=400 \
-		   -fno-conserve-stack -mcpu=cortex-a9 -mtune=cortex-a9 -fno-crossjumping -fno-gcse
-#-mtls-dialect=gnu2
+		   -fno-conserve-stack -mcpu=cortex-a9 -mtune=cortex-a9 -fno-crossjumping -fno-gcse -mtls-dialect=gnu2 -funroll-loops -ftree-vectorize
+
 KBUILD_AFLAGS_KERNEL :=
 KBUILD_CFLAGS_KERNEL :=
 KBUILD_AFLAGS   := -D__ASSEMBLY__
@@ -570,7 +570,6 @@ endif
 
 # conserve stack if available
 # do this early so that an architecture can override it.
-KBUILD_CFLAGS   += $(call cc-option,-fconserve-stack)
 
 include $(srctree)/arch/$(SRCARCH)/Makefile
 
