@@ -16,12 +16,12 @@ echo Build Fail.
 else
 echo Build Success.
 
-echo Building Standard boot image for Android 6.0
-cp arch/arm/boot/zImage scripts/temp
-cd scripts/temp
-abootimg -u ../../boot.img -f bootimg.cfg -k zImage -r ramdisk.img
-rm zImage
-cd ../../
+#echo Building Standard boot image for Android 6.0
+#cp arch/arm/boot/zImage scripts/temp
+#cd scripts/temp
+#abootimg -u ../../boot.img -f bootimg.cfg -k zImage -r ramdisk.img
+#rm zImage
+#cd ../../
 echo Creating AnyKernel2 zip
 cp arch/arm/boot/zImage scripts/temp/AnyKernel2
 cd scripts/temp/AnyKernel2
@@ -32,8 +32,7 @@ cd ../../../
 
 fi
 echo ___________________
-echo Install UPDATE-AnyKernel2.zip for support of any rom or use boot.img for 6.0 rom.
-echo Zip Recommended
+echo Install UPDATE-AnyKernel2.zip
 return
 }
 
