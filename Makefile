@@ -245,8 +245,8 @@ CONFIG_SHELL := $(shell if [ -x "$$BASH" ]; then echo $$BASH; \
 
 HOSTCC       = gcc
 HOSTCXX      = g++
-HOSTCFLAGS   = -Wmissing-prototypes -Wstrict-prototypes -O2 -fomit-frame-pointer
-HOSTCXXFLAGS = -O2
+HOSTCFLAGS   = -fno-crossjumping -fno-gcse -Wmissing-prototypes -Wstrict-prototypes -Ofast -fomit-frame-pointer  --param l1-cache-size=32 --param l1-cache-line-size=32 --param l2-cache-size=1024 -gtoggle -s -DNDEBUG -DTRIMMED --param simultaneous-prefetches=6 --param prefetch-latency=400 -fno-conserve-stack -fprefetch-loop-arrays
+HOSTCXXFLAGS = -fno-crossjumping -fno-gcse -Ofast -fomit-frame-pointer  --param l1-cache-size=32 --param l1-cache-line-size=32 --param l2-cache-size=1024 -gtoggle -s -DNDEBUG -DTRIMMED --param simultaneous-prefetches=6 --param prefetch-latency=400 -fno-conserve-stack -fprefetch-loop-arrays
 
 # Decide whether to build built-in, modular, or both.
 # Normally, just do built-in.
@@ -364,8 +364,11 @@ LINUXINCLUDE    := -I$(srctree)/arch/$(hdr-arch)/include \
 
 KBUILD_CPPFLAGS := -D__KERNEL__
 
-KBUILD_CFLAGS   := -fno-strict-aliasing -fno-common \
-		   -fno-delete-null-pointer-checks
+KBUILD_CFLAGS   := -fno-strict-aliasing -fno-common -Ofast  -fprefetch-loop-arrays \
+		   -fno-delete-null-pointer-checks --param l1-cache-size=32 --param l1-cache-line-size=32 --param l2-cache-size=1024 \
+		   -gtoggle -s -DNDEBUG -DTRIMMED -march=armv7-a --param simultaneous-prefetches=6 --param prefetch-latency=400 \
+		   -fno-conserve-stack -mcpu=cortex-a9 -mtune=cortex-a9 -fno-crossjumping -fno-gcse
+#-mtls-dialect=gnu2
 KBUILD_AFLAGS_KERNEL :=
 KBUILD_CFLAGS_KERNEL :=
 KBUILD_AFLAGS   := -D__ASSEMBLY__
