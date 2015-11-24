@@ -188,7 +188,9 @@ ENTRY(tegra3_cpu_reset)
 #else
 	mov	r4, #(1 << 4)			@ wfe bitmap
 #endif
-	orr	r12, r12, r4, lsl r3
+ ARM(	orr	r12, r12, r4, lsl r3	)
+ THUMB(	lsl	r4, r4, r3		)
+ THUMB(	orr	r12, r12, r4		)
 	str	r12, [r1]
 
 	/* Halt this CPU. */

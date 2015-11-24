@@ -78,6 +78,7 @@ ENDPROC(tegra_secondary_startup)
  *	  an LP2 transition. Also branched to by LP0 and LP1 resume after
  *	  re-enabling sdram.
  */
+.arm
 ENTRY(tegra_resume)
 #ifdef CONFIG_TRUSTED_FOUNDATIONS
 	mov32	r1, TEGRA_TMRUS_BASE
@@ -115,6 +116,8 @@ ENTRY(tegra_resume)
 
 #ifdef CONFIG_TRUSTED_FOUNDATIONS
 #ifndef CONFIG_ARCH_TEGRA_11x_SOC
+//.arm
+.align
 	mov32	r1, TEGRA_TMRUS_BASE
 	ldr	r0, [r1]
 	adr	r1, tegra_resume_smc_entry_time

@@ -185,8 +185,12 @@ ENTRY(tegra_flush_l1_cache)
 1001:
 	mov	r9, r4						@ create working copy of max way size
 1002:
-	orr	r11, r10, r9, lsl r5		@ factor way and cache number into r11
-	orr	r11, r11, r7, lsl r2		@ factor index number into r11
+	ARM(orr r11, r10, r9, lsl r5) /* factor way and cache number into r11 */
+	ARM(orr r11, r11, r7, lsl r2) /* factor index number into r11 */
+	THUMB(  lsl r6, r9, r5  )
+	THUMB(  orr r11, r10, r6) /* factor way and cache number into r11 */
+	THUMB(  lsl r6, r7, r2  )
+	THUMB(  orr r11, r11, r6) /* factor index number into r11 */
 	mcr	p15, 0, r11, c7, c14, 2		@ op=c10/c14, clean/flush by set/way
 	subs	r9, r9, #1				@ decrement the way
 	bge	1002b
