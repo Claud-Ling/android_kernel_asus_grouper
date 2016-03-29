@@ -229,7 +229,7 @@ static struct gpio_charger_platform_data dock_charger_pdata = {
 	.name				= "grouper-dock-charger",
 	.type				= POWER_SUPPLY_TYPE_USB_ACA,
 	.gpio				= TEGRA_GPIO_PU4,
-	.gpio_active_low	= 0,
+	.gpio_active_low	= 1,
 	.supplied_to		= grouper_battery,
 	.num_supplicants	= ARRAY_SIZE(grouper_battery),
 };

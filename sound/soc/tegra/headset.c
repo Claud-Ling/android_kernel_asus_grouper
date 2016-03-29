@@ -343,6 +343,8 @@ static void set_dock_switches(void)
 {
 	bool docked = !gpio_get_value(gpio_dock_in);
 
+	printk("DOCKED: !gpio=%d\n", docked);
+
 	/* LE desk dock == 3, undocked == 0. */
 	switch_set_state(&dock_switch, docked ? 3 : 0);
 
