@@ -597,6 +597,35 @@ static int bq27510_battery_power_avg(struct bq27x00_device_info *di,
 	return -1;
 }
 
+static int bq27510_battery_capacity_using_asus_algorithm(int capacityValue) {
+	int temp_capacity;
+
+	temp_capacity = ((capacityValue >= 100) ? 100 : capacityValue);
+
+	/* start: for mapping %99 to 100%. Lose 84%*/
+	if(temp_capacity==99)
+		temp_capacity=100;
+	if(temp_capacity >=84 && temp_capacity <=98)
+		temp_capacity++;
+	/* for mapping %99 to 100% */
+
+	 /* lose 26% 47% 58%,69%,79% */
+	if(temp_capacity >70 && temp_capacity <80)
+		temp_capacity-=1;
+	else if(temp_capacity >60&& temp_capacity <=70)
+		temp_capacity-=2;
+	else if(temp_capacity >50&& temp_capacity <=60)
+		temp_capacity-=3;
+	else if(temp_capacity >30&& temp_capacity <=50)
+		temp_capacity-=4;
+	else if(temp_capacity >=0&& temp_capacity <=30)
+		temp_capacity-=5;
+
+	/*Re-check capacity to avoid  that temp_capacity <0*/
+	temp_capacity = ((temp_capacity <0) ? 0 : temp_capacity);
+	return temp_capacity;
+}
+
 #define to_bq27x00_device_info(x) container_of((x), \
 				struct bq27x00_device_info, bat);
 
@@ -631,7 +660,8 @@ static int bq27x00_battery_get_property(struct power_supply *psy,
 		ret = bq27x00_battery_current(di, val);
 		break;
 	case POWER_SUPPLY_PROP_CAPACITY:
-		ret = bq27x00_simple_value(di->cache.capacity, val);
+		ret = bq27510_battery_capacity_using_asus_algorithm(
+			bq27x00_simple_value(di->cache.capacity, val));
 		break;
 	case POWER_SUPPLY_PROP_CAPACITY_LEVEL:
 		ret = bq27x00_battery_capacity_level(di, val);
