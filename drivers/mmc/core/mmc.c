@@ -872,7 +872,6 @@ static int mmc_init_card(struct mmc_host *host, u32 ocr,
 	 * For SPI, enable CRC as appropriate.
 	 */
 bool use_spi_crc = 0;
-module_param(use_spi_crc, bool, 0644);
 	/*
 	 * Fetch CID from card.
 	 */
