@@ -2536,7 +2536,7 @@ static struct file_system_type exfat_fs_type = {
 #if defined(CONFIG_MACH_LGE) || defined(CONFIG_HTC_BATT_CORE)
 	.name        = "texfat",
 #else
-	.name        = "exfat",
+	.name        = "exfat, vfat",
 #endif
 #if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,37)
 	.get_sb      = exfat_get_sb,
@@ -2595,6 +2595,6 @@ MODULE_DESCRIPTION("exFAT Filesystem Driver");
 #if defined(CONFIG_MACH_LGE) || defined(CONFIG_HTC_BATT_CORE)
 MODULE_ALIAS_FS("texfat");
 #else
-MODULE_ALIAS_FS("exfat");
+MODULE_ALIAS_FS("exfat, vfat");
 #endif
 #endif
