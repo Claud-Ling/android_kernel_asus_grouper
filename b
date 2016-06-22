@@ -4,7 +4,7 @@ echo BUILD SCRIPT .2
 bldk () {
 echo __________________________
 echo Kernel build
-make -j2 || finish "failed"
+make -j8 || finish "failed"
 finish "success"
 }
 
@@ -47,14 +47,14 @@ grep -q "eabi" <<< "$PATH" || varsnotset=true
 if [ "true" = "$varsnotset" ]
 then
 echo Setting vars.
-export SUBARCH=arm ARCH=arm CROSS_COMPILE=arm-eabi-  PATH=$PATH:/home/jacob/arm-eabi-4.9/bin/ CCACHE=ccache USE_CCACHE=1 CCACHE_DIR=$(pwd)/../.ccache
+export SUBARCH=arm ARCH=arm CROSS_COMPILE=arm-eabi- export PATH=$PATH:/home/jacob/android/prebuilts/gcc/linux-x86/arm/arm-eabi-4.8/bin
 else
 echo Env vars already set.
 fi
 
 ##### Compilation pivot point
 if [ $1 = "cfg" ]; then
-make -j2 menuconfig && return
+make -j8 menuconfig && return
 fi
 if [ -e .config ]
 then
