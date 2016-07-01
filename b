@@ -1,10 +1,10 @@
-echo BUILD SCRIPT .2
+echo BUILD SCRIPT .3
 
 ##### Define functions
 bldk () {
 echo __________________________
 echo Kernel build
-make -j8 || finish "failed"
+make -j8 || finish "failed" && return
 finish "success"
 }
 
@@ -29,10 +29,9 @@ zip -r9 UPDATE-AnyKernel2.zip * -x README UPDATE-AnyKernel2.zip
 mv UPDATE-AnyKernel2.zip ../../../
 rm zImage
 cd ../../../
-
-fi
 echo ___________________
 echo Install UPDATE-AnyKernel2.zip
+fi
 return
 }
 
